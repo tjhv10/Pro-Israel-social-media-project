@@ -4,17 +4,25 @@ import random
 def click_search_bar(d):
     screen_width = d.info['displayWidth']
     # Calculate the coordinates for the top right corner
-    x = screen_width - 50  # Right edge (1 pixel from the right)
+    x = screen_width - 75  # Right edge (1 pixel from the right)
     y = 100  # Top edge (0 pixel from the top)
 
     # Perform the click action
     d.click(x, y)
     print("Clicked on the search bar.")
-def click_like_button(d):
+def click_like_old_account_button(d):
     screen_width = d.info['displayWidth']
     # Calculate the coordinates for the top right corner
-    x = screen_width - 50  # Right edge (1 pixel from the right)
+    x = screen_width - 75  # Right edge (1 pixel from the right)
     y = 800  # Top edge (0 pixel from the top)
+    # Perform the click action
+    d.click(x, y)
+    print("Clicked on the like button.")
+def click_like_new_account_button(d):
+    screen_width = d.info['displayWidth']
+    # Calculate the coordinates for the top right corner
+    x = screen_width - 75  # Right edge (1 pixel from the right)
+    y = 1100  
     # Perform the click action
     d.click(x, y)
     print("Clicked on the like button.")
@@ -23,7 +31,7 @@ def comment_text(d, text):
     screen_width = d.info['displayWidth']
     # Calculate the coordinates for the top right corner
     x = screen_width/2  # Right edge (1 pixel from the right)
-    y = 1500  # Top edge (0 pixel from the top)
+    y = 1500 
     # Perform the click action
     #TODO type the text as needed
     d.click(x, y)
@@ -48,8 +56,8 @@ def scroll_random_number(d):
 
             for i in range(num_swipes):
                 # Swipe down from (x1, y1) to (x2, y2)
-                d.swipe(500, 1200, 500, 600)
-                random_time = random.randint(3, 6)  # Adjusted swipe parameters
+                d.swipe(500, 1200, 500, 300)
+                random_time = random.randint(2, 15)  # Adjusted swipe parameters
                 time.sleep(random_time)  # Wait between swipes
                 print(f"Swiped down {i + 1} time(s).")
         
@@ -72,9 +80,14 @@ def main():
     if "com.zhiliaoapp.musically" in d.app_list_running():
         print("TikTok is running!")
         # click_comment_button(d)
-        # scroll_random_number(d)
+        scroll_random_number(d)
         # click_search_bar(d)
         # comment_text(d,"go Israelllllll")
+        click_like_new_account_button(d)
     else:
         print("TikTok is not running!")
 main()
+# d = u2.connect("10.100.102.168")  # Use the IP address of your device
+
+#     # Wait for a moment to ensure connection
+# time.sleep(1)
