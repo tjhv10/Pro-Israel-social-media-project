@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import uiautomator2 as u2
 import time
 import cv2
@@ -15,7 +16,7 @@ def scroll_once(d):
         # Generate a random starting point for the swipe within a range of 1000 to 1200 on the Y-axis
         rnd_swipe = random.randint(1000, 1200)
         # Swipe down by dragging from the point (500, rnd_swipe) to (500, rnd_swipe-500)
-        d.swipe(500, rnd_swipe, 500, rnd_swipe - 500)
+        d.swipe(500, rnd_swipe, 500, rnd_swipe - 500, duration = 0.05)
         # Wait for a random number of seconds between 1 and 6
         random_time = random.randint(1, 6)
         print(f"Waiting {random_time} seconds...")  # Display the wait time
@@ -39,14 +40,14 @@ def scroll_random_number(d):
         # Perform the swipe action for the chosen number of times
         for i in range(num_swipes):
             rnd_swipe = random.randint(1000, 1200)  # Pick a random Y-coordinate for the swipe
-            d.swipe(500, rnd_swipe, 500, rnd_swipe - 900)  # Swipe down
+            d.swipe(500, rnd_swipe, 500, rnd_swipe - 900, duration = 0.05)  # Swipe down
             random_time = random.randint(2, 15)  # Wait for a random number of seconds
             print(f"Waiting {random_time} seconds...")
             time.sleep(random_time)  # Pause between swipes
             print(f"Swiped down {i + 1} time(s).")
         
         # Swipe up to return to the previous content
-        d.swipe(500, rnd_swipe - 900, 500, rnd_swipe)
+        d.swipe(500, rnd_swipe - 900, 500, rnd_swipe, duration = 0.05)
     else:
         print("No scrollable view found!")
 
@@ -100,57 +101,60 @@ def take_screenshot(d, filename='screenshot.png'):
     
     return screenshot_path  # Return the path of the screenshot
 
-def find_best_match_in_image(image_path, like_button_template_path):
+def find_best_and_second_best_match(image_path, like_button_template_path):
     """
-    Finds the best match of a like button icon in the screenshot using template matching (color images).
+    Finds the best and second best match of a like button icon in the screenshot using template matching (color images).
 
     Parameters:
     image_path (str): Path to the screenshot image.
     like_button_template_path (str): Path to the like button template image.
 
     Returns:
-    tuple or None: Coordinates (x, y) of the center of the best match or None if not found.
+    tuple or None: Coordinates (x, y) of the best and second-best matches and their values, or None if not found.
     """
     # Load the screenshot and like button template images
     img = cv2.imread(image_path)
     template = cv2.imread(like_button_template_path)
 
-    # Check if both images were loaded successfully
-    if img is None:
-        print("Error loading screenshot image.")
-        return None
-    if template is None:
-        print("Error loading like button template image.")
+    if img is None or template is None:
+        print("Error loading images.")
         return None
 
-    # Get the dimensions of the like button template (height and width)
+    # Get the dimensions of the like button template
     h, w = template.shape[:2]
-    new_h, new_w = h, w  # Initialize new height and width for potential resizing
 
-    # If the like button template is larger than the screenshot, resize it
-    if h > img.shape[0] or w > img.shape[1]:
-        print("Like button template is larger than the screenshot, resizing template.")
-        scale_factor = min(img.shape[0] / h, img.shape[1] / w)
-        new_h = int(h * scale_factor)
-        new_w = int(w * scale_factor)
-        template = cv2.resize(template, (new_w, new_h))  # Resize the template to fit
-
-    # Perform template matching to find the best match of the like button icon
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
+    threshold = 0.8  # Minimum threshold for a match
+    loc = np.where(result >= threshold)  # Get locations where matches exceed the threshold
 
-    # Find the best match's location and value
-    _, max_val, _, max_loc = cv2.minMaxLoc(result)
+    # Create a list to store matches with their values and coordinates
+    matches = []
+    for pt in zip(*loc[::-1]):  # Switch columns and rows
+        matches.append((pt, result[pt[1], pt[0]]))  # Append (coordinates, match value)
 
-    # Set a threshold for a "good enough" match (values range from -1 to 1)
-    threshold = 0.8  # You can adjust this value based on testing
-    if max_val >= threshold:
-        # Calculate the center coordinates of the matched area
-        best_match_center = (max_loc[0] + new_w // 2, max_loc[1] + new_h // 2)
-        print(f"Best match found with value: {max_val} at {best_match_center}")
-        return best_match_center  # Return the coordinates of the match center
-    else:
-        print(f"No match found above the threshold. Best match value: {max_val}")
+    if not matches:
+        print("No matches found above the threshold.")
         return None
+
+    # Sort matches by match value
+    matches.sort(key=lambda x: x[1], reverse=True)
+
+    # Get best match
+    best_match = matches[0]
+    best_coordinates = (best_match[0][0] + w // 2, best_match[0][1] + h // 2)
+    best_value = best_match[1]
+
+    # Check for the second-best match
+    second_best_coordinates = None
+    second_best_value = None
+    if len(matches) > 1:
+        second_best_match = matches[1]
+        second_best_coordinates = (second_best_match[0][0] + w // 2, second_best_match[0][1] + h // 2)
+        second_best_value = second_best_match[1]
+
+    print(f"Best match found with value: {best_value} at {best_coordinates}")
+
+    return (best_coordinates, best_value), (second_best_coordinates, second_best_value) if second_best_coordinates else None
 
 def tap_like_button(d, like_button_template_path="twitter_icons/twitter_like_button.png"):
     """
@@ -160,18 +164,32 @@ def tap_like_button(d, like_button_template_path="twitter_icons/twitter_like_but
     d (uiautomator2.Device): The connected device object from uiautomator2.
     like_button_template_path (str): Path to the like button template image.
     """
-    # Take a screenshot of the current screen
     screenshot_path = take_screenshot(d)
-    
-    # Find the best match for the like button in the screenshot
-    coordinates = find_best_match_in_image(screenshot_path, like_button_template_path)
+    best_match, second_best_match = find_best_and_second_best_match(screenshot_path, like_button_template_path)
 
     # If the like button was found, tap on it
-    if coordinates:
-        print(f"Like button found at {coordinates}, tapping...")
-        d.click(coordinates[0], coordinates[1])  # Tap the like button at the found coordinates
+    if best_match:
+        best_coordinates, best_value = best_match
+        print(f"Like button found at {best_coordinates} with match value: {best_value}, tapping...")
+
+        # Check if the second-best match is close enough to the best match
+        if second_best_match:
+            second_coordinates, second_value = second_best_match
+            similarity_tolerance = 0.05  # 5% tolerance for similarity
+            if best_value - second_value <= (similarity_tolerance * best_value):
+                print(f"Second-best match found at {second_coordinates} with match value: {second_value}, tapping...")
+                d.click(int(second_coordinates[0]), int(second_coordinates[1]))  # Tap the second-best match
+            else:
+                d.click(int(best_coordinates[0]), int(best_coordinates[1]))  # Tap the best match
+        else:
+            d.click(int(best_coordinates[0]), int(best_coordinates[1]))  # Tap the best match
     else:
         print("Like button not found on the screen.")
+
+
+
+
+
 
 def comment(d, comment_template_path="twitter_icons/twitter_comment.png"):
     """
@@ -185,7 +203,7 @@ def comment(d, comment_template_path="twitter_icons/twitter_comment.png"):
     screenshot_path = take_screenshot(d)
     
     # Find the best match for the comment icon in the screenshot
-    coordinates = find_best_match_in_image(screenshot_path, comment_template_path)
+    coordinates = find_best_and_second_best_match(screenshot_path, comment_template_path)
 
     # If the comment icon was found, tap on it
     if coordinates:
@@ -245,7 +263,7 @@ def main():
     The main function connects to the Android device and performs various Twitter actions.
     """
     # Connect to the Android device using its IP address (make sure your device is connected via ADB over Wi-Fi)
-    d = u2.connect("10.100.102.102")  # Replace with your device's IP address
+    d = u2.connect("10.100.102.168")  # Replace with your device's IP address
     time.sleep(1)
 
     # Start the Twitter app
@@ -254,16 +272,16 @@ def main():
     time.sleep(7)  # Wait for Twitter to fully load
 
     # Search for a specific text (e.g., a Twitter handle or hashtag) and go to the page
-    search_and_go_to_page(d, "israel adsenya")
-    
+    search_and_go_to_page(d, "israel")
+
     # Perform scrolling and liking of tweets
     scroll_and_like(d)
 
 if __name__ == "__main__":
     # Uncomment this line to run the main function
-    # main()
+    main()
 
     # Example of performing a comment action:
     d = u2.connect("10.100.102.168")  # Use the IP address of your device
     time.sleep(1)
-    comment(d)  # Try to find and tap on the comment icon
+    scroll_and_like(d)  # Try to find and tap on the comment icon

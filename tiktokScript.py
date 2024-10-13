@@ -33,7 +33,7 @@ def search(d, text):
     # Click to go into the first result
     d.click(700 / 1440, 700 / 3168)  # Coordinates for the first user result
 
-def click_like_old_account_button(d):
+def click_like_old_account_like_button(d):
     """
     Clicks the like button for an old account.
 
@@ -131,8 +131,7 @@ def scroll_random_number(d):
             y_start = screen_height * (1200 / 1560)  # Start Y coordinate
             x_end = screen_width * (500 / 720)  # End X coordinate
             y_end = screen_height * (300 / 1560)  # End Y coordinate
-
-            d.swipe(x_start, y_start, x_end, y_end)  # Swipe down
+            d.swipe(x_start, y_start, x_end, y_end, duration = 0.05)  # Swipe down
             random_time = random.randint(2, 15)  # Random wait time between swipes
             time.sleep(random_time)
             print(f"Swiped down {i + 1} time(s).")
@@ -146,34 +145,26 @@ def scroll_and_like(d):
     Parameters:
     d (uiautomator2.Device): The connected device object from uiautomator2.
     """
-    click_like_old_account_button(d)  # Click like button for the old account
+    click_like_old_account_like_button(d)  # Click like button for the old account
     screen_width = d.info['displayWidth']
     screen_height = d.info['displayHeight']
     
     for i in range(100):
         if d(scrollable=True).exists:
-            print("Found a scrollable view! Swiping down...")
-            
-            # Only one swipe down for each iteration
-            num_swipes = 1
-            print(f"Number of swipes: {num_swipes}")
-
-            for i in range(num_swipes):
-                # Swipe down coordinates
-                x_start = screen_width * (500 / 720)  # Start X coordinate
-                y_start = screen_height * (1200 / 1560)  # Start Y coordinate
-                x_end = screen_width * (500 / 720)  # End X coordinate
-                y_end = screen_height * (300 / 1560)  # End Y coordinate
-
-                d.swipe(x_start, y_start, x_end, y_end)  # Swipe down
-                random_time = random.randint(2, 4)  # Random wait time between swipes
-                time.sleep(random_time)
-                print(f"Swiped down {i + 1} time(s).")
+            # Swipe down coordinates
+            x_start = screen_width * (500 / 720)  # Start X coordinate
+            y_start = screen_height * (1200 / 1560)  # Start Y coordinate
+            x_end = screen_width * (500 / 720)  # End X coordinate
+            y_end = screen_height * (300 / 1560)  # End Y coordinate
+            d.swipe(x_start, y_start, x_end, y_end, duration = 0.05)  # Swipe down
+            random_time = random.randint(2, 4)  # Random wait time between swipes
+            time.sleep(random_time)
+            print(f"Swiped down {i + 1} time(s).")
         else:
             print("No scrollable view found!")
         
         # Click the like button again after scrolling
-        click_like_old_account_button(d) 
+        click_like_old_account_like_button(d) 
 
 def like_the_page(d, page):
     """
@@ -202,17 +193,18 @@ def main():
     if "com.zhiliaoapp.musically" in d.app_list_running():
         print("TikTok is running!")
         # Uncomment this line to scroll randomly
-        # scroll_random_number(d)
-        click_like_old_account_button(d)  # Click the like button for an old account
-        click_comment_button(d)  # Click the comment button
+        scroll_random_number(d)
+        time.sleep(1)
+        click_like_old_account_like_button(d)
+        time.sleep(1)  # Click the like button for an old account
         comment_text(d, "go Israel")  # Comment on the post
     else:
         print("TikTok is not running!")
 
 # Run the main function to start the process
-# main()
+main()
 
 # Connect to the device and like the specified page
-d = u2.connect("10.100.102.102")  # Use the IP address of your device
-time.sleep(1)
-like_the_page(d, "israel")  # Like the page "israel"
+# d = u2.connect("10.100.102.102")  # Use the IP address of your device
+# time.sleep(1)
+# scroll_random_number(d)  # Like the page "israel"
