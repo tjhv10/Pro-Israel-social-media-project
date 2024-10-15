@@ -4,6 +4,7 @@ import numpy as np
 import uiautomator2 as u2
 import time
 import random
+from comments import israel_support_comments
 
 def take_screenshot(d, filename='screenshot_tik.png'):
     """
@@ -229,7 +230,8 @@ def scroll_and_like(d):
             print("No scrollable view found!")
         
         # Click the like button again after scrolling
-        click_like(d) 
+        if random.choice([1,2,3,4,5])<5:
+            click_like(d) 
 
 def like_the_page(d, page):
     """
@@ -252,7 +254,6 @@ def main(d):
     d.app_start("com.zhiliaoapp.musically")  # Open TikTok app
     print("Opened TikTok!")
     time.sleep(15)
-
     if "com.zhiliaoapp.musically" in d.app_list_running():
         print("TikTok is running!")
         # Uncomment this line to scroll randomly
@@ -260,14 +261,16 @@ def main(d):
         time.sleep(1)
         click_like(d)
         time.sleep(1)  # Click the like button for an old account
-        comment_text(d, "go Israel")  # Comment on the post
+        scroll_random_number(d)
+        d.app_stop("com.zhiliaoapp.musically")
+        time.sleep(4)
     else:
         print("TikTok is not running!")
 
 # Run the main function to start the process
-# main()
+
 
 # Connect to the device and like the specified page
-d = u2.connect("10.100.102.169")  # Use the IP address of your device
-time.sleep(1)
-like_the_page(d,"idf")
+# d = u2.connect("10.100.102.169")  # Use the IP address of your device
+# time.sleep(1)
+# main(d)

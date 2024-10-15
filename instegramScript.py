@@ -4,6 +4,7 @@ import uiautomator2 as u2
 import time
 import cv2
 import random
+from comments import israel_support_comments
 
 def search_and_go_to_account(d, text):
     """
