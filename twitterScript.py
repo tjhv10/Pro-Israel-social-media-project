@@ -75,13 +75,13 @@ def search(d, text_to_type):
 
     print(f"Typed '{text_to_type}' in the search bar naturally.")
 
-def take_screenshot(d, filename='screenshot.png'):
+def take_screenshot(d, filename='screenshot_twi.png'):
     """
     Takes a screenshot of the current screen and saves it to the 'Screenshots' directory.
 
     Parameters:
     d (uiautomator2.Device): The connected device object from uiautomator2.
-    filename (str): The name of the screenshot file (default: 'screenshot.png').
+    filename (str): The name of the screenshot file (default: 'screenshot_twi.png').
 
     Returns:
     str: The path of the saved screenshot.
@@ -118,13 +118,13 @@ def find_best_and_second_best_match(image_path, like_button_template_path):
 
     if img is None or template is None:
         print("Error loading images.")
-        return None
+        return None, None
 
     # Get the dimensions of the like button template
     h, w = template.shape[:2]
 
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
-    threshold = 0.8  # Minimum threshold for a match
+    threshold = 0.9  # Minimum threshold for a match
     loc = np.where(result >= threshold)  # Get locations where matches exceed the threshold
 
     # Create a list to store matches with their values and coordinates
@@ -134,7 +134,7 @@ def find_best_and_second_best_match(image_path, like_button_template_path):
 
     if not matches:
         print("No matches found above the threshold.")
-        return None
+        return None, None
 
     # Sort matches by match value
     matches.sort(key=lambda x: x[1], reverse=True)
@@ -156,7 +156,7 @@ def find_best_and_second_best_match(image_path, like_button_template_path):
 
     return (best_coordinates, best_value), (second_best_coordinates, second_best_value) if second_best_coordinates else None
 
-def tap_like_button(d, like_button_template_path="twitter_icons/twitter_like_button.png"):
+def tap_like_button(d, like_button_template_path="icons/twitter_icons/like.png"):
     """
     Takes a screenshot and tries to tap on the like button if found.
 
@@ -187,11 +187,7 @@ def tap_like_button(d, like_button_template_path="twitter_icons/twitter_like_but
         print("Like button not found on the screen.")
 
 
-
-
-
-
-def comment(d, comment_template_path="twitter_icons/twitter_comment.png"):
+def comment_text(d, text, comment_template_path="icons/twitter_icons/comment.png"):
     """
     Takes a screenshot and tries to tap on the comment icon if found.
 
@@ -203,26 +199,20 @@ def comment(d, comment_template_path="twitter_icons/twitter_comment.png"):
     screenshot_path = take_screenshot(d)
     
     # Find the best match for the comment icon in the screenshot
-    coordinates = find_best_and_second_best_match(screenshot_path, comment_template_path)
+    coordinates, _ = find_best_and_second_best_match(screenshot_path, comment_template_path)
 
     # If the comment icon was found, tap on it
-    if coordinates:
-        d.click(coordinates[0], coordinates[1])  # Tap the comment button
+    time.sleep(1)
+    if coordinates[0]:
+        d.click(int(coordinates[0][0]), int(coordinates[0][1]))  # Tap the comment button
+        time.sleep(2)
+        for char in text:
+            d.send_keys(char, clear=False)
+            time.sleep(random.uniform(0.1, 0.3))  # Random delay to mimic human typing speed
+        time.sleep(1)
     else:
         print("Comment not found on the screen.")
-
-def scroll_and_like(d):
-    """
-    Scrolls the screen and tries to like a tweet after each scroll by tapping the like button.
-
-    Parameters:
-    d (uiautomator2.Device): The connected device object from uiautomator2.
-    """
-    for i in range(100):  # Repeat the process 100 times (or however many times you'd like)
-        scroll_once(d)  # Scroll down once
-        time.sleep(1)  # Wait 1 second between actions
-        tap_like_button(d)  # Try to tap the like button to like the post
-        time.sleep(2)  # Wait 2 seconds after tapping
+    d.click(620,130)
 
 def scroll_and_like(d):
     """
@@ -236,6 +226,22 @@ def scroll_and_like(d):
         time.sleep(1)  # Wait 1 second between actions
         tap_like_button(d)  # Try to tap the like button icon to like the post
         time.sleep(2)  # Wait 2 seconds after tapping
+
+
+def scroll_like_and_comment(d,text):
+    """
+    Scrolls the screen and tries to like a tweet after each scroll by tapping the like button icon.
+
+    Parameters:
+    d (uiautomator2.Device): The connected device object from uiautomator2.
+    """
+    for i in range(100):  # Repeat the process 100 times (or however many times you'd like)
+        scroll_once(d)  # Scroll down once
+        time.sleep(2)  # Wait 1 second between actions
+        tap_like_button(d)  # Try to tap the like button icon to like the post
+        time.sleep(3)  # Wait 2 seconds after tapping
+        comment_text(d,text)
+        time.sleep(2)
 
 def search_and_go_to_page(d, text):
     """
@@ -273,15 +279,15 @@ def main():
 
     # Search for a specific text (e.g., a Twitter handle or hashtag) and go to the page
     search_and_go_to_page(d, "israel")
-
-    # Perform scrolling and liking of tweets
-    scroll_and_like(d)
-
-if __name__ == "__main__":
-    # Uncomment this line to run the main function
-    main()
-
-    # Example of performing a comment action:
-    d = u2.connect("10.100.102.168")  # Use the IP address of your device
     time.sleep(1)
-    scroll_and_like(d)  # Try to find and tap on the comment icon
+    # Perform scrolling and liking of tweets
+    scroll_like_and_comment(d,"Go israel")
+    
+
+# Uncomment this line to run the main function
+# main()
+
+# Example of performing a comment action:
+# d = u2.connect("10.100.102.168")  # Use the IP address of your device
+# time.sleep(1)
+# comment_text(d,"go israel")
