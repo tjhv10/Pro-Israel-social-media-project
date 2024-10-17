@@ -1,14 +1,34 @@
 import os
+import subprocess
+import threading
 import numpy as np
 import uiautomator2 as u2
 import time
 import cv2
 import random
 from comments import israel_support_comments
+ 
+def get_connected_devices():
+    """
+    Get the list of all connected devices using ADB.
+
+    Returns:
+    list: A list of device IPs or IDs connected via ADB.
+    """
+    result = subprocess.run(['adb', 'devices'], stdout=subprocess.PIPE)
+    output = result.stdout.decode('utf-8').strip().splitlines()
+
+    devices = []
+    for line in output[1:]:  # Skip the first line ('List of devices attached')
+        if 'device' in line:  # Make sure it's a connected device
+            device_id = line.split()[0]  # Extract the device ID (first column)
+            devices.append(device_id)
+    
+    return devices
+
+device_ips = get_connected_devices()
 
 twitter_handles = [
-    "@DannyNis",
-    "@ElhananMiller",
     "@GershonBaskin",
     "@HonestReporting",
     "@Issacharoff",
@@ -23,28 +43,246 @@ twitter_handles = [
     "@HananyaNaftali",
     "@AmbDermer",
     "@BoothWilliam",
-    "@AnshelPfeffer"
+    "@AnshelPfeffer",
+    "@ElhananMiller",
+    "@DannyNis"
 ]
 
-def scroll_once(d):
-    """
-    Scrolls down once on a scrollable view in the app in a more natural, human-like manner.
+adb_reset_event = threading.Event()
+action_lock = threading.Lock()
 
-    Parameters:
-    d (uiautomator2.Device): The connected device object from uiautomator2.
-    """
-    if d(scrollable=True).exists:
-        # Randomize the swipe starting and ending points to make it more natural
-        start_x = random.randint(400, 600)  # Random X-coordinate for swipe start (center of screen)
-        start_y = random.randint(900, 1200)  # Random Y-coordinate for swipe start (somewhere in middle)
-        end_y = start_y - random.randint(400, 600)  # Randomized swipe length (scrolls down by 400 to 600 pixels)
-        # Randomize swipe duration to simulate variable human swipe speed (0.2 to 0.5 seconds)
-        swipe_duration = random.uniform(0.04, 0.06)
-        # Perform the swipe
-        d.swipe(start_x, start_y, start_x, end_y, duration=swipe_duration)
-        print(f"Scrolled from ({start_x}, {start_y}) to ({start_x}, {end_y}) in {swipe_duration:.2f} seconds.")
+# Global variable to track lock status
+lock_acquired = False
+
+def acquire_action_lock():
+    global lock_acquired
+    print(f"Thread {threading.current_thread().name} attempting to acquire action lock.")
+    action_lock.acquire()
+    lock_acquired = True
+    print(f"Thread {threading.current_thread().name} acquired action lock.")
+
+def release_action_lock():
+    global lock_acquired
+    action_lock.release()
+    lock_acquired = False
+    print(f"Thread {threading.current_thread().name} released action lock.")
+
+def connect_to_devices():
+    print("Starting connect_to_devices function")
+    for ip in device_ips:
+        result = os.system(f"adb connect {ip}")
+        if result == 0:
+            print(f"Connected to {ip}")
+        else:
+            print(f"Failed to connect to {ip}")
+    print("Finished connect_to_devices function")
+
+
+def restart_adb_periodically(interval=600):
+    while True:
+        time.sleep(interval)
+        print("Setting ADB reset event to pause actions...")
+        adb_reset_event.set()  # Set the event to signal that ADB is resetting
+        
+        with action_lock:  # Prevent actions during ADB restart
+            print("Restarting ADB server...")
+            os.system("adb kill-server")
+            time.sleep(2)
+            os.system("adb start-server")
+            print("ADB server restarted.")
+            time.sleep(1)
+            connect_to_devices()
+            time.sleep(2)
+
+        print("Clearing ADB reset event...")
+        adb_reset_event.clear()  # Clear the event to resume actions
+        print("Resuming after ADB reset.")
+
+
+def scroll_once(d):
+    print("Starting scroll_once function")
+    
+    if adb_reset_event.is_set():
+        print("Paused1 due to ADB reset event.")
+        time.sleep(10)
+    
+    acquire_action_lock()
+    try:
+        print("Starting scroll action")
+        if d(scrollable=True).exists:
+            start_x = random.randint(400, 600)
+            start_y = random.randint(900, 1200)
+            end_y = start_y - random.randint(400, 600)
+            swipe_duration = random.uniform(0.04, 0.06)
+            d.swipe(start_x, start_y, start_x, end_y, duration=swipe_duration)
+            print(f"Scrolled from ({start_x}, {start_y}) to ({start_x}, {end_y}) in {swipe_duration:.2f} seconds.")
+        else:
+            print("No scrollable view found!")
+    finally:
+        release_action_lock()
+
+    print("Finished scroll_once function")
+
+def tap_like_button(d, like_button_template_path="icons/twitter_icons/like.png"):
+    print("Starting tap_like_button function")
+    
+    if adb_reset_event.is_set():
+        print("Paused2 due to ADB reset event.")
+        time.sleep(10)
+
+    acquire_action_lock()
+    try:
+        screenshot_path = take_screenshot(d)
+        best_match, second_best_match = find_best_and_second_best_match(screenshot_path, like_button_template_path)
+
+        if best_match:
+            best_coordinates = best_match
+            print(f"Like button found at {best_coordinates}, tapping...")
+            if second_best_match:
+                second_coordinates = second_best_match
+                if (best_coordinates[1] < second_coordinates[1]):
+                    d.click(int(second_coordinates[0]), int(second_coordinates[1]))
+                    print(f"Tapped second-best match at {second_coordinates}.")
+                else:
+                    d.click(int(best_coordinates[0]), int(best_coordinates[1]))
+                    print(f"Tapped best match at {best_coordinates}.")
+            else:
+                d.click(int(best_coordinates[0]), int(best_coordinates[1]))
+                print(f"Tapped best match at {best_coordinates}.")
+        else:
+            print("Like button not found on the screen.")
+    finally:
+        release_action_lock()
+
+    print("Finished tap_like_button function")
+
+def find_best_and_second_best_match(image_path, template_path):
+    print("Finding best and second-best match...")
+    img = cv2.imread(image_path)
+    template = cv2.imread(template_path)
+
+    if img is None or template is None:
+        print("Error loading images.")
+        return None, None
+
+    result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
+    threshold = 0.7
+    yloc, xloc = np.where(result >= threshold)
+    matches = list(zip(xloc, yloc))
+
+    if matches:
+        best_match = max(matches, key=lambda coord: result[coord[1], coord[0]])
+        matches.remove(best_match)
+        second_best_match = max(matches, key=lambda coord: result[coord[1], coord[0]]) if matches else None
+        print(f"Best match found at {best_match}, second-best match found at {second_best_match}.")
+        return best_match, second_best_match
     else:
-        print("No scrollable view found!")  # If the screen is not scrollable, display a message
+        print("No matches found.")
+        return None, None
+
+def comment_text(d, text, comment_template_path="icons/twitter_icons/comment.png"):
+    print("Starting comment_text function")
+
+    if adb_reset_event.is_set():
+        print("Paused3 due to ADB reset event.")
+        time.sleep(10)
+
+    acquire_action_lock()
+    try:
+        screenshot_path = take_screenshot(d)
+        best_match, _ = find_best_and_second_best_match(screenshot_path, comment_template_path)
+
+        time.sleep(1)
+        if best_match:
+            d.click(int(best_match[0]), int(best_match[1]))  # Unpack directly
+            time.sleep(2)
+            for char in text:
+                d.send_keys(char, clear=False)
+                time.sleep(random.uniform(0.05, 0.1))
+            time.sleep(1)
+            d.click(600, 125)  # Click the post button
+        else:
+            print("Comment icon not found on the screen.")
+    finally:
+        release_action_lock()
+
+    print("Finished comment_text function")
+
+def scroll_and_like(d):
+    print("Starting scroll_and_like function")
+    for _ in range(30):
+        if adb_reset_event.is_set():
+            print("Paused7 due to ADB reset event.")
+            time.sleep(10)
+        time.sleep(random.uniform(2, 14))
+        if d(scrollable=True).exists:
+            start_x = random.randint(400, 600)
+            start_y = random.randint(900, 1200)
+            end_y = start_y - random.randint(400, 600)
+            swipe_duration = random.uniform(0.04, 0.06)
+            d.swipe(start_x, start_y, start_x, end_y, duration=swipe_duration)
+            print(f"Scrolled from ({start_x}, {start_y}) to ({start_x}, {end_y}) in {swipe_duration:.2f} seconds.")
+        else:
+            print("No scrollable view found!")
+        time.sleep(random.uniform(1, 14))
+        action = random.choice([1, 2, 3, 4, 5])
+        if action != 1:
+            print("Pressing like!")
+            tap_like_button(d)
+        else:
+            print("Not pressing like!")
+    print("Finished scroll_and_like function")
+
+def scroll_like_and_comment(d):
+    print("Starting scroll_like_and_comment function")
+    actions = ['like', 'comment', 'both', 'none']
+    for _ in range(30):
+        time.sleep(random.uniform(2, 14))
+        if adb_reset_event.is_set():
+            print("Paused8 due to ADB reset event.")
+            time.sleep(10)
+        if d(scrollable=True).exists:
+            start_x = random.randint(400, 600)
+            start_y = random.randint(900, 1200)
+            end_y = start_y - random.randint(400, 600)
+            swipe_duration = random.uniform(0.04, 0.06)
+            d.swipe(start_x, start_y, start_x, end_y, duration=swipe_duration)
+            print(f"Scrolled from ({start_x}, {start_y}) to ({start_x}, {end_y}) in {swipe_duration:.2f} seconds.")
+        else:
+            print("No scrollable view found!")
+        time.sleep(random.uniform(2, 14))
+        action = random.choice(actions)
+        print(f"Action chosen: {action}")
+        text = random.choice(israel_support_comments)
+
+        if action == 'like':
+            tap_like_button(d)
+            print("Liked the post.")
+
+        elif action == 'comment':
+            comment_text(d, text)
+            print(f"Commented: {text}")
+
+        elif action == 'both':
+            tap_like_button(d)
+            print("Liked the post.")
+            time.sleep(2)
+            comment_text(d, text)
+            print(f"Commented: {text}")
+        else:
+            if adb_reset_event.is_set():
+                print("Paused6 due to ADB reset event.")
+                time.sleep(10)
+
+    d.press("back")
+    d.press("back")
+    print("Finished scroll_like_and_comment function")
+
+def take_screenshot(d, filename='screenshot_twi.png'):
+    print("Taking screenshot...")
+    d.screenshot(filename)
+    print(f"Screenshot saved as {filename}.")
+    return filename
 
 def scroll_random_number(d):
     """
@@ -53,227 +291,41 @@ def scroll_random_number(d):
     Parameters:
     d (uiautomator2.Device): The connected device object from uiautomator2.
     """
-    if d(scrollable=True).exists:
-        print("Found a scrollable view! Swiping down...")
+    if adb_reset_event.is_set():
+        print("Paused4 due to ADB reset event.")
+        time.sleep(10)
 
-        # Randomly choose how many times to swipe (between 1 and 3)
-        num_swipes = random.randint(1, 6)
-        print(f"Number of swipes: {num_swipes}")
+    acquire_action_lock()
+    try:
+        if d(scrollable=True).exists:
+            print("Found a scrollable view! Swiping down...")
 
-        # Perform the swipe action for the chosen number of times
-        for _ in range(num_swipes):
-            scroll_once(d)
-            time.sleep(random.randint(2, 10))
-        time.sleep(3)
-        # Swipe up to return to the previous content
-        d.swipe(500, 300, 500, 800, duration = 0.05)
-        print("Swipped up!")
-        time.sleep(3)
-    else:
-        print("No scrollable view found!")
-    
+            # Randomly choose how many times to swipe (between 1 and 3)
+            num_swipes = random.randint(1, 6)
+            print(f"Number of swipes: {num_swipes}")
 
-def take_screenshot(d, filename='screenshot_twi.png'):
-    """
-    Takes a screenshot of the current screen and saves it to the 'Screenshots' directory.
-
-    Parameters:
-    d (uiautomator2.Device): The connected device object from uiautomator2.
-    filename (str): The name of the screenshot file (default: 'screenshot_twi.png').
-
-    Returns:
-    str: The path of the saved screenshot.
-    """
-    screenshot_dir = 'Screenshots'
-    
-    # Create the 'Screenshots' directory if it doesn't exist
-    if not os.path.exists(screenshot_dir):
-        os.makedirs(screenshot_dir)
-    
-    # Create the full path for the screenshot file
-    screenshot_path = os.path.join(screenshot_dir, filename)
-    
-    # Take the screenshot and save it to the specified path
-    d.screenshot(screenshot_path)
-    print(f"Screenshot saved to: {screenshot_path}")
-    
-    return screenshot_path  # Return the path of the screenshot
-
-def find_best_and_second_best_match(image_path, like_button_template_path):
-    """
-    Finds the best and second best match of a like button icon in the screenshot using template matching (color images).
-
-    Parameters:
-    image_path (str): Path to the screenshot image.
-    like_button_template_path (str): Path to the like button template image.
-
-    Returns:
-    tuple or None: Coordinates (x, y) of the best and second-best matches and their values, or None if not found.
-    """
-    # Load the screenshot and like button template images
-    img = cv2.imread(image_path)
-    template = cv2.imread(like_button_template_path)
-
-    if img is None or template is None:
-        print("Error loading images.")
-        return None, None
-
-    # Get the dimensions of the like button template
-    h, w = template.shape[:2]
-
-    result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
-    threshold = 0.9  # Minimum threshold for a match
-    loc = np.where(result >= threshold)  # Get locations where matches exceed the threshold
-
-    # Create a list to store matches with their values and coordinates
-    matches = []
-    for pt in zip(*loc[::-1]):  # Switch columns and rows
-        matches.append((pt, result[pt[1], pt[0]]))  # Append (coordinates, match value)
-
-    if not matches:
-        print("No matches found above the threshold.")
-        return None, None
-
-    # Sort matches by match value
-    matches.sort(key=lambda x: x[1], reverse=True)
-
-    # Get best match
-    best_match = matches[0]
-    best_coordinates = (best_match[0][0] + w // 2, best_match[0][1] + h // 2)
-    best_value = best_match[1]
-
-    # Check for the second-best match
-    second_best_coordinates = None
-    second_best_value = None
-    if len(matches) > 1:
-        second_best_match = matches[1]
-        second_best_coordinates = (second_best_match[0][0] + w // 2, second_best_match[0][1] + h // 2)
-        second_best_value = second_best_match[1]
-
-    print(f"Best match found with value: {best_value} at {best_coordinates}")
-
-    return (best_coordinates, best_value), (second_best_coordinates, second_best_value) if second_best_coordinates else None
-
-def tap_like_button(d, like_button_template_path="icons/twitter_icons/like.png"):
-    """
-    Takes a screenshot and tries to tap on the like button if found.
-
-    Parameters:
-    d (uiautomator2.Device): The connected device object from uiautomator2.
-    like_button_template_path (str): Path to the like button template image.
-    """
-    screenshot_path = take_screenshot(d)
-    best_match, second_best_match = find_best_and_second_best_match(screenshot_path, like_button_template_path)
-
-    # If the like button was found, tap on it
-    if best_match:
-        best_coordinates, best_value = best_match
-        print(f"Like button found at {best_coordinates} with match value: {best_value}, tapping...")
-
-        # Check if the second-best match is close enough to the best match
-        if second_best_match:
-            second_coordinates, second_value = second_best_match
-            similarity_tolerance = 0.05  # 5% tolerance for similarity
-            if best_value - second_value <= (similarity_tolerance * best_value) and second_coordinates[1]<best_coordinates[1]:
-                print(f"Second-best match found at {second_coordinates} with match value: {second_value}, tapping...")
-                d.click(int(second_coordinates[0]), int(second_coordinates[1]))  # Tap the second-best match
-            else:
-                d.click(int(best_coordinates[0]), int(best_coordinates[1]))  # Tap the best match
+            # Perform the swipe action for the chosen number of times
+            for _ in range(num_swipes):
+                if d(scrollable=True).exists:
+                    start_x = random.randint(400, 600)
+                    start_y = random.randint(900, 1200)
+                    end_y = start_y - random.randint(400, 600)
+                    swipe_duration = random.uniform(0.04, 0.06)
+                    d.swipe(start_x, start_y, start_x, end_y, duration=swipe_duration)
+                    print(f"Scrolled from ({start_x}, {start_y}) to ({start_x}, {end_y}) in {swipe_duration:.2f} seconds.")
+                else:
+                    print("No scrollable view found!")
+                time.sleep(random.randint(2, 10))
+            time.sleep(3)
+            # Swipe up to return to the previous content
+            d.swipe(500, 300, 500, 800, duration = 0.05)
+            print("Swipped up!")
+            time.sleep(3)
         else:
-            d.click(int(best_coordinates[0]), int(best_coordinates[1]))  # Tap the best match
-    else:
-        print("Like button not found on the screen.")
+            print("No scrollable view found!")
+    finally:
+        release_action_lock()
 
-
-def comment_text(d, text, comment_template_path="icons/twitter_icons/comment.png"):
-    """
-    Takes a screenshot and tries to tap on the comment icon if found.
-
-    Parameters:
-    d (uiautomator2.Device): The connected device object from uiautomator2.
-    comment_template_path (str): Path to the comment icon template image.
-    """
-    # Take a screenshot of the current screen
-    screenshot_path = take_screenshot(d)
-    
-    # Find the best match for the comment icon in the screenshot
-    coordinates, _ = find_best_and_second_best_match(screenshot_path, comment_template_path)
-
-    # If the comment icon was found, tap on it
-    time.sleep(1)
-    if coordinates[0]:
-        d.click(int(coordinates[0][0]), int(coordinates[0][1]))  # Tap the comment button
-        time.sleep(2)
-        for char in text:
-            d.send_keys(char, clear=False)
-            time.sleep(random.uniform(0.1, 0.3))  # Random delay to mimic human typing speed
-        time.sleep(1)
-    else:
-        print("Comment not found on the screen.")
-    time.sleep(1)
-    d.click(600,125)
-    time.sleep(1)
-
-
-def scroll_and_like(d):
-    """
-    Scrolls the screen and tries to like a tweet after each scroll by tapping the like button icon.
-
-    Parameters:
-    d (uiautomator2.Device): The connected device object from uiautomator2.
-    """
-    for _ in range(30):  # Repeat the process 100 times (or however many times you'd like)
-        time.sleep(random.uniform(2, 14))  # Wait 2 seconds after tapping
-        scroll_once(d)  # Scroll down once
-        time.sleep(random.uniform(1, 14))
-        action = random.choice([1,2])  # Wait 1 second between actions
-        if action==1:
-            print("Pressing like!")
-            tap_like_button(d)  # Try to tap the like button icon to like the post
-        else:
-            print("Not pressing like!")
-    time.sleep(2)
-    print("Swipped up!")
-    d.swipe(500, 300, 500, 800, duration = 0.05)
-    time.sleep(2)
-        
-
-def scroll_like_and_comment(d):
-    """
-    Scrolls the screen and randomly likes, comments, both, or neither on each tweet.
-
-    Parameters:
-    d (uiautomator2.Device): The connected device object from uiautomator2.
-    text (str): The text to comment.
-    """
-    actions = ['like', 'comment', 'both', 'none']  # Possible actions
-
-    for _ in range(30):  # Repeat the process 100 times (or however many times you'd like)
-        # Random wait between actions
-        time.sleep(random.uniform(2, 14))
-        scroll_once(d)  # Scroll down once
-        time.sleep(random.uniform(2, 14))  # Random wait between scrolls
-        # Randomly choose an action
-        action = random.choice(actions)
-        print(f"Action chosen: {action}")
-        text = random.choice(israel_support_comments)
-        if action == 'like':
-            tap_like_button(d)  # Tap the like button
-            print("Liked the post.")
-        elif action == 'comment':
-            comment_text(d, text)  # Comment on the post
-            print(f"Commented: {text}")
-        elif action == 'both':
-            tap_like_button(d)  # Like the post
-            print("Liked the post.")
-            time.sleep(2)  # Add a small delay between liking and commenting
-            comment_text(d, text)  # Comment on the post
-            print(f"Commented: {text}")
-    time.sleep(2)
-    print("Swipped up!")
-    d.swipe(500, 300, 500, 800, duration = 0.05)
-    time.sleep(2)    
-        
 def search_and_go_to_page(d, text):
     """
     Searches for the specified text in Twitter and navigates to the desired page.
@@ -282,60 +334,71 @@ def search_and_go_to_page(d, text):
     d (uiautomator2.Device): The connected device object from uiautomator2.
     text (str): The text to search for.
     """
-    # Perform the search
-    d.click(180, 1500)
-    print("Clicked on the search button.")
-    time.sleep(3)
+    if adb_reset_event.is_set():
+        print("Paused5 due to ADB reset event.")
+        time.sleep(10)
+    
+    acquire_action_lock()
+    try:
+        # Perform the search
+        d.click(180, 1500)
+        print("Clicked on the search button.")
+        time.sleep(3)
 
-    # Click on the search input field
-    d.click(360, 140)
-    time.sleep(5)
+        # Click on the search input field
+        d.click(360, 140)
+        time.sleep(5)
 
-    # Type each character of the search term with a random delay to simulate human typing
-    for char in text:
-        d.send_keys(char, clear=False)
-        time.sleep(random.uniform(0.1, 0.3))  # Random delay between 0.1 and 0.3 seconds
-    time.sleep(2)
-    print(f"Typed '{text}' in the search bar naturally.")
-    d.click(350,250)  # Press Enter (key code 66) after typing the search text
-    time.sleep(3)  # Wait for the search results to load
-
-    # Tap on the first result (coordinates may vary)
-    d.click(400, 240)
-    print("Got into the page!")
-    time.sleep(5)
-
-
-def main(d):
-    """
-    The main function connects to the Android device and performs various Twitter actions.
-    """
-    # Start the Twitter app
-    d.app_start("com.twitter.android")
-    print("Opened Twitter!")
-    time.sleep(7)  # Wait for Twitter to fully load
-    d.click(75,1500) # Go to home
-    for _ in range(random.randint(4,10)):
-        scroll_random_number(d)
-        time.sleep(4)
-        tap_like_button(d)
+        # Type each character of the search term with a random delay to simulate human typing
+        for char in text:
+            d.send_keys(char, clear=False)
+            time.sleep(random.uniform(0.1, 0.3))  # Random delay between 0.1 and 0.3 seconds
         time.sleep(2)
-    time.sleep(2)
-    for page in twitter_handles:
-        search_and_go_to_page(d, page)
+        print(f"Typed '{text}' in the search bar naturally.")
+        d.click(350,250)  # Press Enter (key code 66) after typing the search text
+        print("Got into the page!")
+        time.sleep(5)
+    finally:
+        release_action_lock()
+
+if __name__ == "__main__":
+    def main(d):
+        """
+        The main function connects to the Android device and performs various Twitter actions.
+        """
+        connect_to_devices()
+        adb_restart_thread = threading.Thread(target=restart_adb_periodically, daemon=True)
+        adb_restart_thread.start()
+        acquire_action_lock()
         time.sleep(2)
-        # Perform scrolling and liking of tweets
-        scroll_like_and_comment(d)
+        # Start the Twitter app
+        d.app_start("com.twitter.android")
+        print("Opened Twitter!")
+        time.sleep(7)  # Wait for Twitter to fully load
         d.click(75,1500) # Go to home
-        time.sleep(4)
+        release_action_lock()
         for _ in range(random.randint(4,10)):
             scroll_random_number(d)
             time.sleep(4)
             tap_like_button(d)
             time.sleep(2)
-        time.sleep(5)
-    d.app_stop("com.twitter.android")
-    time.sleep(4)
+        time.sleep(2)
+        for page in twitter_handles:
+            search_and_go_to_page(d, page)
+            time.sleep(2)
+            # Perform scrolling and liking of tweets
+            scroll_like_and_comment(d)
+            d.click(75,1500) # Go to home
+            time.sleep(4)
+            for _ in range(random.randint(4,10)):
+                scroll_random_number(d)
+                time.sleep(4)
+                tap_like_button(d)
+                time.sleep(2)
+            time.sleep(5)
+        d.app_stop("com.twitter.android")
+        time.sleep(4)
 
-d = u2.connect("10.100.102.170")  # Use the IP address of your device
+
+d = u2.connect("10.100.102.171")  # Use the IP address of your device
 main(d)
