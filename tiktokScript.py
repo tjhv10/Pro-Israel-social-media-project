@@ -6,7 +6,7 @@ import time
 import random
 import threading
 from comments import israel_support_comments
-from twitterScript import *
+from twitterScript import connect_to_devices
 
 # Global variables
 tiktok_accounts = []
@@ -24,6 +24,28 @@ def release_action_lock():
     Release the action lock.
     """
     action_lock.release()
+
+
+def restart_adb_periodically(interval=30):
+    while True:
+        time.sleep(interval)
+        print("Setting ADB reset event to pause actions...")
+        adb_reset_event.set()  # Set the event to signal that ADB is resetting
+        
+        with action_lock:  # Prevent actions during ADB restart
+            print("Restarting ADB server...")
+            os.system("adb kill-server")
+            time.sleep(2)
+            os.system("adb start-server")
+            print("ADB server restarted.")
+            time.sleep(1)
+            connect_to_devices()
+            time.sleep(2)
+
+        print("Clearing ADB reset event...")
+        adb_reset_event.clear()  # Clear the event to resume actions
+        print("Resuming after ADB reset.")
+
 
 def take_screenshot(d, filename='screenshot_tik.png'):
     """
@@ -43,7 +65,7 @@ def find_best_and_second_best_match(image_path, users_template_path):
     """
     print("Starting find_best_and_second_best_match function")
     if adb_reset_event.is_set():
-            print("Paused due to ADB reset event.")
+            print("Paused2 due to ADB reset event.")
             time.sleep(10)
 
     acquire_action_lock()  # Acquire the lock
@@ -84,7 +106,7 @@ def tap_users(d, users_template_path="icons/tiktok_icons/users.png"):
     Takes a screenshot and tries to tap on the like button if found.
     """
     if adb_reset_event.is_set():
-        print("Paused due to ADB reset event.")
+        print("Paused 3due to ADB reset event.")
         time.sleep(10)
     screenshot_path = take_screenshot(d)
     best_match = find_best_and_second_best_match(screenshot_path, users_template_path)
@@ -105,7 +127,7 @@ def search(d, text):
     Searches for a specific user on TikTok by simulating clicks and typing.
     """
     if adb_reset_event.is_set():
-        print("Paused due to ADB reset event.")
+        print("Paused4 due to ADB reset event.")
         time.sleep(10)
     screen_width = d.info['displayWidth']
     screen_height = d.info['displayHeight']
@@ -138,8 +160,8 @@ def click_like(d):
     Clicks the like button for an old account.
     """
     if adb_reset_event.is_set():
-        print("Paused due to ADB reset event.")
-        time.sleep(10)
+        print("Paused5 due to ADB reset event.")
+        time.sleep(20)
 
     acquire_action_lock()  # Acquire the lock
     try:
@@ -153,7 +175,7 @@ def comment_text(d, text):
     Comments on a post.
     """
     if adb_reset_event.is_set():
-        print("Paused due to ADB reset event.")
+        print("Paused6 due to ADB reset event.")
         time.sleep(10)
     acquire_action_lock()  # Acquire the lock
     try:
@@ -179,7 +201,7 @@ def scroll_random_number(d):
     screen_width = d.info['displayWidth']
     screen_height = d.info['displayHeight']
     if adb_reset_event.is_set():
-        print("Paused due to ADB reset event.")
+        print("Paused7 due to ADB reset event.")
         time.sleep(10)
     acquire_action_lock()  # Acquire the lock
     try:
@@ -212,7 +234,7 @@ def scroll_and_like(d):
 
     for i in range(100):
         if adb_reset_event.is_set():
-            print("Paused due to ADB reset event.")
+            print("Paused8 due to ADB reset event.")
             time.sleep(10)
         acquire_action_lock()  # Acquire the lock
         try:
@@ -253,7 +275,7 @@ def main(d):
     d.app_start("com.zhiliaoapp.musically")  # Open TikTok app
     print("Opened TikTok!")
     if adb_reset_event.is_set():
-        print("Paused due to ADB reset event.")
+        print("Paused1 due to ADB reset event.")
         time.sleep(10)
     time.sleep(15)
     
@@ -263,13 +285,17 @@ def main(d):
         time.sleep(1)
         click_like(d)
         time.sleep(1)
+        like_the_page(d,"hananyaNaftali")
         scroll_random_number(d)
+        if adb_reset_event.is_set():
+            print("Paused9 due to ADB reset event.")
+            time.sleep(10)
         d.app_stop("com.zhiliaoapp.musically")
         time.sleep(4)
     else:
         print("TikTok is not running!")
 
 # Example usage (make sure to uncomment when running)
-# d = u2.connect("10.100.102.169")  # Use the IP address of your device
-# time.sleep(1)
-# main(d)
+d = u2.connect("10.100.102.171")  # Use the IP address of your device
+time.sleep(1)
+main(d)

@@ -78,7 +78,7 @@ def connect_to_devices():
     print("Finished connect_to_devices function")
 
 
-def restart_adb_periodically(interval=600):
+def restart_adb_periodically(interval=10):
     while True:
         time.sleep(interval)
         print("Setting ADB reset event to pause actions...")
@@ -400,5 +400,5 @@ if __name__ == "__main__":
         time.sleep(4)
 
 
-d = u2.connect("10.100.102.171")  # Use the IP address of your device
-main(d)
+# d = u2.connect("10.100.102.171")  # Use the IP address of your device
+# main(d)
