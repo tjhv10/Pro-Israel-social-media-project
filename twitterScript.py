@@ -78,7 +78,7 @@ def connect_to_devices():
     print("Finished connect_to_devices function")
 
 
-def restart_adb_periodically(interval=10):
+def restart_adb_periodically(interval=600):
     while True:
         time.sleep(interval)
         print("Setting ADB reset event to pause actions...")
@@ -104,7 +104,7 @@ def scroll_once(d):
     
     if adb_reset_event.is_set():
         print("Paused1 due to ADB reset event.")
-        time.sleep(10)
+        time.sleep(13)
     
     acquire_action_lock()
     try:
@@ -128,7 +128,7 @@ def tap_like_button(d, like_button_template_path="icons/twitter_icons/like.png")
     
     if adb_reset_event.is_set():
         print("Paused2 due to ADB reset event.")
-        time.sleep(10)
+        time.sleep(13)
 
     acquire_action_lock()
     try:
@@ -185,7 +185,7 @@ def comment_text(d, text, comment_template_path="icons/twitter_icons/comment.png
 
     if adb_reset_event.is_set():
         print("Paused3 due to ADB reset event.")
-        time.sleep(10)
+        time.sleep(13)
 
     acquire_action_lock()
     try:
@@ -213,7 +213,7 @@ def scroll_and_like(d):
     for _ in range(30):
         if adb_reset_event.is_set():
             print("Paused7 due to ADB reset event.")
-            time.sleep(10)
+            time.sleep(13)
         time.sleep(random.uniform(2, 14))
         if d(scrollable=True).exists:
             start_x = random.randint(400, 600)
@@ -237,10 +237,14 @@ def scroll_like_and_comment(d):
     print("Starting scroll_like_and_comment function")
     actions = ['like', 'comment', 'both', 'none']
     for _ in range(30):
-        time.sleep(random.uniform(2, 14))
+        print("start loop")
+        time.sleep(2)
+        print("stop sleep")
+        print(adb_reset_event.is_set())
         if adb_reset_event.is_set():
             print("Paused8 due to ADB reset event.")
-            time.sleep(10)
+            time.sleep(13)
+        acquire_action_lock()
         if d(scrollable=True).exists:
             start_x = random.randint(400, 600)
             start_y = random.randint(900, 1200)
@@ -256,24 +260,30 @@ def scroll_like_and_comment(d):
         text = random.choice(israel_support_comments)
 
         if action == 'like':
+            release_action_lock()
             tap_like_button(d)
             print("Liked the post.")
 
         elif action == 'comment':
+            release_action_lock()
             comment_text(d, text)
             print(f"Commented: {text}")
 
         elif action == 'both':
+            release_action_lock()
             tap_like_button(d)
             print("Liked the post.")
             time.sleep(2)
             comment_text(d, text)
             print(f"Commented: {text}")
         else:
+            release_action_lock()
             if adb_reset_event.is_set():
                 print("Paused6 due to ADB reset event.")
-                time.sleep(10)
-
+                time.sleep(13)
+    if adb_reset_event.is_set():
+        print("Paused6 due to ADB reset event.")
+        time.sleep(13)
     d.press("back")
     d.press("back")
     print("Finished scroll_like_and_comment function")
@@ -293,7 +303,7 @@ def scroll_random_number(d):
     """
     if adb_reset_event.is_set():
         print("Paused4 due to ADB reset event.")
-        time.sleep(10)
+        time.sleep(13)
 
     acquire_action_lock()
     try:
@@ -336,7 +346,7 @@ def search_and_go_to_page(d, text):
     """
     if adb_reset_event.is_set():
         print("Paused5 due to ADB reset event.")
-        time.sleep(10)
+        time.sleep(13)
     
     acquire_action_lock()
     try:
@@ -400,5 +410,5 @@ if __name__ == "__main__":
         time.sleep(4)
 
 
-# d = u2.connect("10.100.102.171")  # Use the IP address of your device
-# main(d)
+d = u2.connect("10.100.102.171")  # Use the IP address of your device
+main(d)
