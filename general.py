@@ -104,7 +104,7 @@ def main():
 
 def main_for_1_phone():
     # Specify the IP address of the single device you want to connect to
-    device_id = "10.100.102.169"
+    device_id = "10.100.102.171"
 
     # Run the program on the specified device
     run_program(device_id)

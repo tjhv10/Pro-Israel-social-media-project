@@ -29,23 +29,23 @@ def get_connected_devices():
 device_ips = get_connected_devices()
 
 twitter_handles = [
-    "@GershonBaskin",
-    "@HonestReporting",
-    "@Issacharoff",
-    "@JeffreyGoldberg",
+    # "@GershonBaskin",
+    # "@HonestReporting",
+    # "@Issacharoff",
+    # "@JeffreyGoldberg",
     "@KhaledAbuToameh",
-    "@LahavHarkov",
-    "@MaxAbrahms",
-    "@MickyRosenfeld",
-    "@RaphaelAhren",
-    "@YaakovLappin",
-    "@YnetNews",
-    "@HananyaNaftali",
-    "@AmbDermer",
-    "@BoothWilliam",
-    "@AnshelPfeffer",
-    "@ElhananMiller",
-    "@DannyNis"
+    "@LahavHarkov"
+    # "@MaxAbrahms",
+    # "@MickyRosenfeld",
+    # "@RaphaelAhren",
+    # "@YaakovLappin",
+    # "@YnetNews",
+    # "@HananyaNaftali",
+    # "@AmbDermer",
+    # "@BoothWilliam",
+    # "@AnshelPfeffer",
+    # "@ElhananMiller",
+    # "@DannyNis"
 ]
 
 adb_reset_event = threading.Event()
@@ -98,30 +98,6 @@ def restart_adb_periodically(interval=600):
         adb_reset_event.clear()  # Clear the event to resume actions
         print("Resuming after ADB reset.")
 
-
-def scroll_once(d):
-    print("Starting scroll_once function")
-    
-    if adb_reset_event.is_set():
-        print("Paused1 due to ADB reset event.")
-        time.sleep(13)
-    
-    acquire_action_lock()
-    try:
-        print("Starting scroll action")
-        if d(scrollable=True).exists:
-            start_x = random.randint(400, 600)
-            start_y = random.randint(900, 1200)
-            end_y = start_y - random.randint(400, 600)
-            swipe_duration = random.uniform(0.04, 0.06)
-            d.swipe(start_x, start_y, start_x, end_y, duration=swipe_duration)
-            print(f"Scrolled from ({start_x}, {start_y}) to ({start_x}, {end_y}) in {swipe_duration:.2f} seconds.")
-        else:
-            print("No scrollable view found!")
-    finally:
-        release_action_lock()
-
-    print("Finished scroll_once function")
 
 def tap_like_button(d, like_button_template_path="icons/twitter_icons/like.png"):
     print("Starting tap_like_button function")
@@ -208,30 +184,6 @@ def comment_text(d, text, comment_template_path="icons/twitter_icons/comment.png
 
     print("Finished comment_text function")
 
-def scroll_and_like(d):
-    print("Starting scroll_and_like function")
-    for _ in range(30):
-        if adb_reset_event.is_set():
-            print("Paused7 due to ADB reset event.")
-            time.sleep(13)
-        time.sleep(random.uniform(2, 14))
-        if d(scrollable=True).exists:
-            start_x = random.randint(400, 600)
-            start_y = random.randint(900, 1200)
-            end_y = start_y - random.randint(400, 600)
-            swipe_duration = random.uniform(0.04, 0.06)
-            d.swipe(start_x, start_y, start_x, end_y, duration=swipe_duration)
-            print(f"Scrolled from ({start_x}, {start_y}) to ({start_x}, {end_y}) in {swipe_duration:.2f} seconds.")
-        else:
-            print("No scrollable view found!")
-        time.sleep(random.uniform(1, 14))
-        action = random.choice([1, 2, 3, 4, 5])
-        if action != 1:
-            print("Pressing like!")
-            tap_like_button(d)
-        else:
-            print("Not pressing like!")
-    print("Finished scroll_and_like function")
 
 def scroll_like_and_comment(d):
     print("Starting scroll_like_and_comment function")
@@ -371,44 +323,44 @@ def search_and_go_to_page(d, text):
     finally:
         release_action_lock()
 
-if __name__ == "__main__":
-    def main(d):
-        """
-        The main function connects to the Android device and performs various Twitter actions.
-        """
-        connect_to_devices()
-        adb_restart_thread = threading.Thread(target=restart_adb_periodically, daemon=True)
-        adb_restart_thread.start()
-        acquire_action_lock()
+
+def main(d):
+    """
+    The main function connects to the Android device and performs various Twitter actions.
+    """
+    connect_to_devices()
+    adb_restart_thread = threading.Thread(target=restart_adb_periodically, daemon=True)
+    adb_restart_thread.start()
+    acquire_action_lock()
+    time.sleep(2)
+    # Start the Twitter app
+    d.app_start("com.twitter.android")
+    print("Opened Twitter!")
+    time.sleep(7)  # Wait for Twitter to fully load
+    d.click(75,1500) # Go to home
+    release_action_lock()
+    for _ in range(random.randint(4,10)):
+        scroll_random_number(d)
+        time.sleep(4)
+        tap_like_button(d)
         time.sleep(2)
-        # Start the Twitter app
-        d.app_start("com.twitter.android")
-        print("Opened Twitter!")
-        time.sleep(7)  # Wait for Twitter to fully load
+    time.sleep(2)
+    for page in twitter_handles:
+        search_and_go_to_page(d, page)
+        time.sleep(2)
+        # Perform scrolling and liking of tweets
+        scroll_like_and_comment(d)
         d.click(75,1500) # Go to home
-        release_action_lock()
+        time.sleep(4)
         for _ in range(random.randint(4,10)):
             scroll_random_number(d)
             time.sleep(4)
             tap_like_button(d)
             time.sleep(2)
-        time.sleep(2)
-        for page in twitter_handles:
-            search_and_go_to_page(d, page)
-            time.sleep(2)
-            # Perform scrolling and liking of tweets
-            scroll_like_and_comment(d)
-            d.click(75,1500) # Go to home
-            time.sleep(4)
-            for _ in range(random.randint(4,10)):
-                scroll_random_number(d)
-                time.sleep(4)
-                tap_like_button(d)
-                time.sleep(2)
-            time.sleep(5)
-        d.app_stop("com.twitter.android")
-        time.sleep(4)
+        time.sleep(5)
+    d.app_stop("com.twitter.android")
+    time.sleep(4)
 
 
-d = u2.connect("10.100.102.171")  # Use the IP address of your device
-main(d)
+# d = u2.connect("10.100.102.171")  # Use the IP address of your device
+# main(d)
