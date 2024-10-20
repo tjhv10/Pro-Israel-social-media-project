@@ -8,10 +8,41 @@ import random
 import threading
 from comments import israel_support_comments
 
-# Global variables
-tiktok_accounts = []
+tiktok_accounts = [
+    "israel",
+    "powerisrael",
+    "israel_hayom",
+    "tbn_official",
+    "tbn_fr",
+    "tbnua",
+    "cbnnewsofficial",
+    "cbcnews",
+    "newsmaxtv",
+    "hananyanaftali",
+    "rudy_israel",
+    "Shaidavidai",
+    "adelacojab",
+    "noybeyleyb",
+    "EylonALevy",
+    "Kami.Soprano",
+    "yoavdavis",
+    "millennialmoor",
+    "Jews_of_Ny",
+    "tlvinstitute",
+    "noatishby",
+    "jewishhistory",
+    "houseoflev",
+    "melissaschapman",
+    "jordyntilchen",
+    "Jewishvibes",
+    "EndJewHatred",
+    "alizalicht",
+    "wearetov",
+    "Libbyamberwalker",
+    "2024newvoices"
+]
 
-def take_screenshot(d, filename='screenshot_tik.png'):
+def take_screenshot(d, filename=f"{threading.current_thread().name}-screenshot_tik.png"):
     """
     Takes a screenshot of the current screen and saves it to the 'Screenshots' directory.
     """
@@ -23,22 +54,23 @@ def take_screenshot(d, filename='screenshot_tik.png'):
     print(f"Screenshot saved to: {screenshot_path}")
     return screenshot_path
 
-def find_best_and_second_best_match(image_path, users_template_path):
+def find_best_and_second_best_match(image_path, users_template_path, d):
     """
-    Finds the best and second best match of a users button icon in the screenshot using template matching.
+    Finds the best match of a user's button icon in the screenshot using template matching.
     """
     time.sleep(2)
-    print("Starting find_best_and_second_best_match function")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Starting find_best_match function")
+    
     img = cv2.imread(image_path)
     template = cv2.imread(users_template_path)
 
     if img is None or template is None:
-        print("Error loading images.")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Error loading images.")
         return None
 
     h, w = template.shape[:2]
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
-    threshold = 0.8
+    threshold = 0.7
     loc = np.where(result >= threshold)
 
     matches = []
@@ -46,18 +78,20 @@ def find_best_and_second_best_match(image_path, users_template_path):
         matches.append((pt, result[pt[1], pt[0]]))
 
     if not matches:
-        print("No matches found above the threshold.")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} No matches found above the threshold.")
         return None
 
-    matches.sort(key=lambda x: x[1], reverse=True)
-    best_match = matches[0]
+    # Get the best match (highest confidence value)
+    best_match = max(matches, key=lambda x: x[1])
     best_coordinates = (best_match[0][0] + w // 2, best_match[0][1] + h // 2)
     best_value = best_match[1]
 
     print(f"Best match found with value: {best_value} at {best_coordinates}")
 
-    print("Finished find_best_and_second_best_match function")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Finished find_best_match function")
+    
     return (best_coordinates, best_value)
+
     
 
 def tap_users(d, users_template_path="icons/tiktok_icons/users.png"):
@@ -66,7 +100,7 @@ def tap_users(d, users_template_path="icons/tiktok_icons/users.png"):
     """
     
     screenshot_path = take_screenshot(d)
-    best_match = find_best_and_second_best_match(screenshot_path, users_template_path)
+    best_match = find_best_and_second_best_match(screenshot_path, users_template_path,d)
 
     
     if best_match:
@@ -74,7 +108,7 @@ def tap_users(d, users_template_path="icons/tiktok_icons/users.png"):
         print(f"Users button found at {best_coordinates} with match value: {best_value}, tapping...")
         d.click(int(best_coordinates[0]), int(best_coordinates[1]))
     else:
-        print("Users button not found on the screen.")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Users button not found on the screen.")
    
 
 def search(d, text):
@@ -107,30 +141,30 @@ def search(d, text):
         
 
 def tap_like_button(d, like_button_template_path="icons/tiktok_icons/like.png"):
-    print("Starting tap_like_button function")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Starting tap_like_button function")
     screenshot_path = take_screenshot(d)
-    best_match = find_best_and_second_best_match(screenshot_path, like_button_template_path)
-    print(best_match)
+    best_match = find_best_and_second_best_match(screenshot_path, like_button_template_path,d)
     if best_match:
         best_coordinates = best_match[0]
         print(f"Like button found at {best_coordinates}, tapping...")
         d.click(int(best_coordinates[0]), int(best_coordinates[1]))
         print(f"Tapped best match at {best_coordinates}.")
+        time.sleep(1)
     else:
-        print("Like button not found on the screen.")
-    print("Finished tap_like_button function")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Like button not found on the screen.")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Finished tap_like_button function")
 
 # def comment_text(d, text):
 #     """
 #     Comments on a post.
 #     """
 #     if adb_reset_event.is_set():
-#         print("Paused6 due to ADB reset event.")
+#         print(f"{threading.current_thread().name}:{d.wlan_ip} Paused6 due to ADB reset event.")
 #         time.sleep(10)
 #     acquire_action_lock()  # Acquire the lock
 #     try:
 #         d.click(670, 1000)
-#         print("Clicked on the comment button.")
+#         print(f"{threading.current_thread().name}:{d.wlan_ip} Clicked on the comment button.")
 
 #         d.click(310, 1500)  # Click on the comment input
 #         print(f"Commenting: {text}")
@@ -152,7 +186,7 @@ def scroll_random_number(d):
     screen_height = d.info['displayHeight']
     
     if d(scrollable=True).exists:
-        print("Found a scrollable view! Swiping down...")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Found a scrollable view! Swiping down...")
         num_swipes = random.randint(3, 6)
         print(f"Number of swipes: {num_swipes}")
 
@@ -164,9 +198,9 @@ def scroll_random_number(d):
             d.swipe(x_start, y_start, x_end, y_end, duration=0.05)
             random_time = random.randint(2, 15)
             time.sleep(random_time)
-            print(f"Swiped down {i + 1} time(s).")
-        else:
-            print("No scrollable view found!")
+            print(f"{threading.current_thread().name}:{d.wlan_ip} Swiped down {i + 1} time(s).")
+    else:
+        print(f"{threading.current_thread().name}:{d.wlan_ip} No scrollable view found!")
 
 
 
@@ -180,7 +214,7 @@ def scroll_and_like(d):
     screen_width = d.info['displayWidth']
     screen_height = d.info['displayHeight']
 
-    for i in range(1):
+    for i in range(30):
         
         if d(scrollable=True).exists:
             x_start = screen_width * (500 / 720)
@@ -190,11 +224,12 @@ def scroll_and_like(d):
             d.swipe(x_start, y_start, x_end, y_end, duration=0.05)
             random_time = random.randint(2, 15)
             time.sleep(random_time)
-            print(f"Swiped down {i + 1} time(s).")
+            print(f"{threading.current_thread().name}:{d.wlan_ip} Swiped down {i + 1} time(s).")
         else:
-            print("No scrollable view found!")
+            print(f"{threading.current_thread().name}:{d.wlan_ip} No scrollable view found!")
         if random.choice([1, 2, 3, 4, 5]) < 5:
             tap_like_button(d)
+            time.sleep(1)
     d.press("back")
     d.press("back")
     time.sleep(2)
@@ -218,10 +253,10 @@ def main(d):
     Main function to connect to the device and perform actions on TikTok.
     """
     d.app_start("com.zhiliaoapp.musically")  # Open TikTok app
-    print("Opened TikTok!")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} :Opened TikTok!")
     time.sleep(15)
     if "com.zhiliaoapp.musically" in d.app_list_running():
-        print("TikTok is running!")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} TikTok is running!")
         scroll_random_number(d)
         time.sleep(1)
         tap_like_button(d)
@@ -232,7 +267,8 @@ def main(d):
         d.app_stop("com.zhiliaoapp.musically")
         time.sleep(4)
     else:
-        print("TikTok is not running!")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} TikTok is not running!")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} done")
 
 # Example usage (make sure to uncomment when running)
 # d = u2.connect("10.100.102.171")  # Use the IP address of your device

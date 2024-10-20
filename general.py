@@ -56,11 +56,12 @@ def run_program(device_id, adb_port):
     d = u2.connect(f"{device_id}:5555")
     
     if d is not None:
-        print(f"Running Twitter script on device: {device_id} (ADB port: {adb_port})")
-        twi.main(d,adb_port)
-        time.sleep(5)  # Delay between scripts
-        print(f"Running TikTok script on device: {device_id} (ADB port: {adb_port})")
-        tik.main(d)
+        for _ in range(100):
+            print(f"Running Twitter script on device: {device_id} (ADB port: {adb_port})")
+            tik.main(d)
+        # time.sleep(5)  # Delay between scripts
+        # print(f"Running TikTok script on device: {device_id} (ADB port: {adb_port})")
+        # tik.main(d)
     else:
         print(f"Could not connect to device: {device_id} on ADB port {adb_port}")
 
@@ -101,7 +102,7 @@ def main():
 
 def main_for_1_phone():
     # Specify the IP address of the single device you want to connect to
-    device_id = "10.100.102.171"
+    device_id = "10.100.102.173"
     adb_port = 5038  # Example ADB server port for this device
 
     # Start a new ADB server on the specified port
@@ -114,5 +115,5 @@ def main_for_1_phone():
     run_program(device_id, adb_port)
 
 # Uncomment the function you want to run
-main()
-# main_for_1_phone()
+# main()
+main_for_1_phone()
