@@ -1,6 +1,5 @@
 import threading
 import numpy as np
-import uiautomator2 as u2
 import time
 import cv2
 import random
@@ -100,11 +99,8 @@ def find_best_and_second_best_match(image_path, template_path):
 
 def comment_text(d, text, comment_template_path="icons/twitter_icons/comment.png"):
     print(f"{threading.current_thread().name}: Starting comment_text function")
-
-    
     screenshot_path = take_screenshot(d,threading.current_thread().name)
     best_match, _ = find_best_and_second_best_match(screenshot_path, comment_template_path)
-    
     if best_match:
         d.click(int(best_match[0]), int(best_match[1]))  # Unpack directly
         time.sleep(2)
@@ -149,6 +145,8 @@ def scroll_like_and_comment(d):
             time.sleep(2)
             comment_text(d, text)
             print(f"Commented: {text}")
+
+
     d.press("back")
     d.press("back")
     print(f"{threading.current_thread().name}: Finished scroll_like_and_comment function")
@@ -160,6 +158,7 @@ def take_screenshot(d,thread):
     d.screenshot(filename)
     print(f"Screenshot saved as {filename}.")
     return filename
+
 
 def scroll_random_number(d):
     """
@@ -195,6 +194,8 @@ def scroll_random_number(d):
         time.sleep(3)
     else:
         print(f"{threading.current_thread().name}: No scrollable view foundd!")
+
+
 def search_and_go_to_page(d, text):
     """
     Searches for the specified text in Twitter and navigates to the desired page.
@@ -253,7 +254,4 @@ def main(d):
         time.sleep(5)
     d.app_stop("com.twitter.android")
     time.sleep(4)
-
-
-# d = u2.connect("10.100.102.171")  # Use the IP address of your device
-# main(d)
+    

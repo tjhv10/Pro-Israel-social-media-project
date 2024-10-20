@@ -58,7 +58,7 @@ def find_best_and_second_best_match(image_path, users_template_path, d):
     """
     Finds the best match of a user's button icon in the screenshot using template matching.
     """
-    time.sleep(2)
+    time.sleep(0.5)
     print(f"{threading.current_thread().name}:{d.wlan_ip} Starting find_best_match function")
     
     img = cv2.imread(image_path)
@@ -70,7 +70,7 @@ def find_best_and_second_best_match(image_path, users_template_path, d):
 
     h, w = template.shape[:2]
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
-    threshold = 0.7
+    threshold = 0.65
     loc = np.where(result >= threshold)
 
     matches = []
@@ -98,11 +98,8 @@ def tap_users(d, users_template_path="icons/tiktok_icons/users.png"):
     """
     Takes a screenshot and tries to tap on the like button if found.
     """
-    
     screenshot_path = take_screenshot(d)
     best_match = find_best_and_second_best_match(screenshot_path, users_template_path,d)
-
-    
     if best_match:
         best_coordinates, best_value = best_match
         print(f"Users button found at {best_coordinates} with match value: {best_value}, tapping...")
@@ -203,9 +200,6 @@ def scroll_random_number(d):
         print(f"{threading.current_thread().name}:{d.wlan_ip} No scrollable view found!")
 
 
-
-
-
 def scroll_and_like(d):
     """
     Scrolls the view and likes posts.
@@ -269,8 +263,3 @@ def main(d):
     else:
         print(f"{threading.current_thread().name}:{d.wlan_ip} TikTok is not running!")
     print(f"{threading.current_thread().name}:{d.wlan_ip} done")
-
-# Example usage (make sure to uncomment when running)
-# d = u2.connect("10.100.102.171")  # Use the IP address of your device
-# time.sleep(1)
-# main(d)

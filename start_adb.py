@@ -8,11 +8,11 @@ import time
 
 # List of device IPs to connect to (you need to populate this list with actual IPs)
 device_ips = [
-    "10.100.102.173",
-    "10.100.102.171",
     "10.100.102.169",
     "10.100.102.170",
+    "10.100.102.171",
     "10.100.102.172",
+    "10.100.102.173",
 ]
 START_PORT = 5001
 NUM_SERVERS = len(device_ips)
@@ -53,13 +53,10 @@ def start_and_connect_all_servers():
         start_adb_server(port)
         
         # Wait briefly before connecting to the device
-        time.sleep(2)
+        time.sleep(1)
         
         # Connect the device with the current ADB server port
         connect_device(port, device_ips[i])
         
         # Wait briefly to avoid overwhelming the system
-        time.sleep(2)
-
-
-    
+        time.sleep(1)
