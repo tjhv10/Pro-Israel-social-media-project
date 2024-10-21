@@ -4,26 +4,28 @@ import time
 import cv2
 import random
 from comments import israel_support_comments
+from PIL import Image
+import easyocr
+import uiautomator2 as u2
+
 
 twitter_handles = [
-    "yishaifleisher",
+    "YishaiFleisher",
     "Israellycool",
     "DavidM_Friedman",
     "Ostrov_A",
-    "lahavharkov",
+    "LahavHarkov",
     "havivrettiggur",
-    "gil_hoffman",
+    "Gil_Hoffman",
     "AIPAC",
     "sfrantzman",
     "EylonALevy",
     "FleurHassanN",
-    "DemMaj4Israel",
     "khaledAbiToameh",
-    "rich goldberg",
+    "rich_goldberg",
     "EVKontorovich",
     "imshin",
-    "jtruzmah",
-    "barakravid",
+    "BarakRavid",
     "MaxAbrahms",
     "MickyRosenfeld",
     "RaphaelAhren",
@@ -82,11 +84,12 @@ def tap_keyboard(d, text, keyboard = keyboard_dic):
     """
     for char in text.lower():  # Convert the text to lowercase to match the dictionary keys
         if char in keyboard:
+            if char == "_":
+                char == " "
             x, y = keyboard[char]
             d.click(x, y)  # Simulate a tap on the screen at the corresponding coordinates
             time.sleep(random.uniform(0.04, 0.07))  # Add a small delay between taps
         else:
-
             print(f"{threading.current_thread().name}:{d.wlan_ip} Character '{char}' not found in keyboard dictionary!")
 
 
@@ -95,14 +98,14 @@ def tap_like_button(d, like_button_template_path="icons/twitter_icons/like.png")
     
     screenshot_path = take_screenshot(d,threading.current_thread().name)
     
-    best_match, second_best_match = find_best_and_second_best_match(screenshot_path, like_button_template_path)    
+    best_match, second_best_match = find_best_match(screenshot_path, like_button_template_path)    
     
     if best_match:
         best_coordinates = best_match
         print(f"{threading.current_thread().name}:{d.wlan_ip} Like button found at {best_coordinates}, tapping...")
         if second_best_match:
             second_coordinates = second_best_match
-            if (best_coordinates[1] < second_coordinates[1]):
+            if (best_coordinates[1] > second_coordinates[1]):
                 d.click(int(second_coordinates[0]), int(second_coordinates[1]))
                 print(f"{threading.current_thread().name}:{d.wlan_ip} Tapped second-best match at {second_coordinates}.")
             else:
@@ -116,7 +119,7 @@ def tap_like_button(d, like_button_template_path="icons/twitter_icons/like.png")
     
     print(f"{threading.current_thread().name}:{d.wlan_ip} Finished tap_like_button function")
 
-def find_best_and_second_best_match(image_path, template_path):
+def find_best_match(image_path, template_path):
     print(f"{threading.current_thread().name}: Finding best and second-best match...")
     img = cv2.imread(image_path)
     template = cv2.imread(template_path)
@@ -146,7 +149,7 @@ def find_best_and_second_best_match(image_path, template_path):
 def comment_text(d, text, comment_template_path="icons/twitter_icons/comment.png"):
     print(f"{threading.current_thread().name}:{d.wlan_ip} Starting comment_text function")
     screenshot_path = take_screenshot(d,threading.current_thread().name)
-    best_match, _ = find_best_and_second_best_match(screenshot_path, comment_template_path)
+    best_match, _ = find_best_match(screenshot_path, comment_template_path)
     if best_match:
         d.click(int(best_match[0]), int(best_match[1]))  # Unpack directly
         time.sleep(2)
@@ -170,7 +173,7 @@ def scroll_like_and_comment(d):
             d.swipe(start_x, start_y, start_x, end_y, duration=swipe_duration)
             print(f"{threading.current_thread().name}:{d.wlan_ip} Scrolled from ({start_x}, {start_y}) to ({start_x}, {end_y}) in {swipe_duration:.2f} seconds.")
         else:
-            print(f"{threading.current_thread().name}:{d.wlan_ip} No scrollable view foun!")
+            print(f"{threading.current_thread().name}:{d.wlan_ip} No scrollable view found!")
         time.sleep(random.uniform(2, 14))
         action = random.choice(actions)
         print(f"Action chosen: {action}")
@@ -189,8 +192,8 @@ def scroll_like_and_comment(d):
             time.sleep(2)
             comment_text(d, text)
             print(f"{threading.current_thread().name}:{d.wlan_ip} Commented: {text}")
-
-
+        time.sleep(3)
+    d.press("back")
     d.press("back")
     d.press("back")
     print(f"{threading.current_thread().name}:{d.wlan_ip} Finished scroll_like_and_comment function")
@@ -214,7 +217,7 @@ def scroll_random_number(d):
     if d(scrollable=True).exists:
         print(f"{threading.current_thread().name}:{d.wlan_ip} Found a scrollable view! Swiping down...")
 
-        # Randomly choose how many times to swipe (between 1 and 3)
+        # Randomly choose how many times to swipe (between 1 and 6)
         num_swipes = random.randint(1, 6)
         print(f"{threading.current_thread().name}:{d.wlan_ip} Number of swipes: {num_swipes}")
 
@@ -228,13 +231,15 @@ def scroll_random_number(d):
                 d.swipe(start_x, start_y, start_x, end_y, duration=swipe_duration)
                 print(f"{threading.current_thread().name}:{d.wlan_ip} Scrolled from ({start_x}, {start_y}) to ({start_x}, {end_y}) in {swipe_duration:.2f} seconds.")
             else:
-                print(f"{threading.current_thread().name}: No scrollable view founddd!")
+                print(f"{threading.current_thread().name}: No scrollable view found!")
+                d.click(40,1340)
             time.sleep(random.randint(2, 10))
     else:
-        print(f"{threading.current_thread().name}:{d.wlan_ip} No scrollable view foundd!")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} No scrollable view found!")
 
 
-def search_and_go_to_page(d, text):
+
+def search_and_go_to_page(d, page_name):
     """
     Searches for the specified text in Twitter and navigates to the desired page.
 
@@ -244,7 +249,6 @@ def search_and_go_to_page(d, text):
     """
     # Swipe up to return to the previous content
     d.swipe(500, 300, 500, 1000, duration = 0.05)
-    print(f"{threading.current_thread().name}:{d.wlan_ip} Swipped up!")
     time.sleep(3)
     # Perform the search
     d.click(180, 1500)
@@ -254,13 +258,60 @@ def search_and_go_to_page(d, text):
     d.click(360, 140)
     time.sleep(5)
     # Type each character of the search term with a random delay to simulate human typing
-    tap_keyboard(d,text)  # Random delay between 0.1 and 0.3 seconds
+    tap_keyboard(d,page_name)
     time.sleep(2)
-    print(f"{threading.current_thread().name}:{d.wlan_ip} Typed '{text}' in the search bar naturally.")
-    d.click(350,250)  # Press Enter (key code 66) after typing the search text
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Typed '{page_name}' in the search bar naturally.")
+    x,y = search_name(d,"@"+page_name)
+    d.click(int(x),int(y))
+    # d.press(66) # Press Enter (key code 66) after typing the search text
+    # time.sleep(5)
+    # d.click(408,234)  # Press people button
+    # time.sleep(3)
+     # Press first result
     print(f"{threading.current_thread().name}:{d.wlan_ip} Got into the page!")
     time.sleep(5)
 
+def follow_page(d, follow_template_path="icons/twitter_icons/follow.png"):
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Starting follow_page function")
+    screenshot_path = take_screenshot(d,threading.current_thread().name)
+    best_match, _ = find_best_match(screenshot_path, follow_template_path)
+    if best_match:
+        num = random.choice([1, 2, 3])
+        if  num <= 2:
+            d.click(int(best_match[0]), int(best_match[1]))
+
+            print(f"{threading.current_thread().name}:{d.wlan_ip} Followed account!")
+            time.sleep(1)
+        else:
+            print(f"{threading.current_thread().name}:{d.wlan_ip} didn't followed account!")
+        time.sleep(2)
+    else:
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Follow icon not found on the screen.")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Finished follow_page function")
+
+
+def search_name(d, name):
+    screen_shot = take_screenshot(d, threading.current_thread().name)
+    print(name)
+    # Initialize the OCR reader
+    reader = easyocr.Reader(['en'])  # You can add more languages if needed
+
+    # Perform OCR
+    result = reader.readtext(screen_shot, detail=1)  # detail=1 provides bounding box and text
+
+    # Iterate over detected texts
+    for detection in result:
+        bbox, text, _ = detection
+        if name.lower() in text.lower():
+            # Bounding box gives four points (top-left, top-right, bottom-right, bottom-left)
+            top_left, _, bottom_right, _ = bbox
+
+            # Calculate the center position of the bounding box
+            center_x = (top_left[0] + bottom_right[0]) // 2
+            center_y = (top_left[1] + bottom_right[1]) // 2
+            return (center_x, center_y)
+
+    return None  # If the text is not found
 
 
 def main(d):
@@ -270,8 +321,8 @@ def main(d):
     # Start the Twitter app
     d.app_start("com.twitter.android")
     print(f"{threading.current_thread().name}:{d.wlan_ip} Opened Twitter!")
-    time.sleep(12)  # Wait for Twitter to fully load
-    d.click(75,1500) # Go to home
+    # time.sleep(12)  # Wait for Twitter to fully load
+    # d.click(75,1500) # Go to home
     # for _ in range(random.randint(4,10)):
     #     scroll_random_number(d)
     #     time.sleep(4)
@@ -281,16 +332,17 @@ def main(d):
     for _ in range(3):
         search_and_go_to_page(d, random.choice(twitter_handles))
         time.sleep(2)
+        follow_page(d)
+        time.sleep(2)
         # Perform scrolling and liking of tweets
         scroll_like_and_comment(d)
         d.click(75,1500) # Go to home
         time.sleep(4)
-        # for _ in range(random.randint(4,10)):
-        #     scroll_random_number(d)
-        #     time.sleep(2)
-        #     tap_like_button(d)
-        #     time.sleep(2)
-        # time.sleep(5)
+        for _ in range(random.randint(4,10)):
+            scroll_random_number(d)
+            time.sleep(2)
+            tap_like_button(d)
+            time.sleep(2)
+        time.sleep(5)
     d.app_stop("com.twitter.android")
     time.sleep(4)
-    

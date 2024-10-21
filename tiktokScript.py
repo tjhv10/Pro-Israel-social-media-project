@@ -285,7 +285,7 @@ def like_the_page(d, page):
     Likes the specified page and comments on a post.
     """
     search(d, page)
-    d.click(120, 1300)
+    d.click(120, 1300) # Get in the first page
     time.sleep(2)
     scroll_like_and_comment(d)
 

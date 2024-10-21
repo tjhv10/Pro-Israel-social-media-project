@@ -10,7 +10,6 @@ def run_program(device_id):
     Function to run Twitter and TikTok scripts on a specific phone connected to a custom ADB server port.
     Parameters:
     device_id (str): The IP of the phone.
-    
     """
     print(f"Attempting to connect to device: {device_id}")
     
