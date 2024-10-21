@@ -40,7 +40,7 @@ def main():
     threads = []
     for dev in devices:
         # Start a new thread to run the program for each device
-        thread = threading.Thread(target=run_program, args=(dev))
+        thread = threading.Thread(target=run_program, args=(dev,))
         threads.append(thread)
         thread.start()
 
@@ -51,8 +51,8 @@ def main():
 
 def main_for_1_phone():
     # Run the program on the specified device
-    run_program("10.100.102.173")
+    run_program("10.100.102.171")
 
 # Uncomment the function you want to run
-main()
-# main_for_1_phone()
+# main()
+main_for_1_phone()

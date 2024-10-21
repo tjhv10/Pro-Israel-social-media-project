@@ -42,17 +42,58 @@ tiktok_accounts = [
     "2024newvoices"
 ]
 
-def take_screenshot(d, filename=f"{threading.current_thread().name}-screenshot_tik.png"):
+keyboard_dic = {
+    "q": (40, 1200),
+    "w": (110, 1200),
+    "e": (180, 1200),
+    "r": (250, 1200),
+    "t": (320, 1200),
+    "y": (390, 1200),
+    "u": (460, 1200),
+    "i": (530, 1200),
+    "o": (600, 1200),
+    "p": (670, 1200),
+    "a": (70, 1285),
+    "s": (140, 1285),
+    "d": (210, 1285),
+    "f": (280, 1285),
+    "g": (350, 1285),
+    "h": (420, 1285),
+    "j": (490, 1285),
+    "k": (560, 1285),
+    "l": (630, 1285),
+    "z": (150, 1400),
+    "x": (220, 1400),
+    "c": (290, 1400),
+    "v": (360, 1400),
+    "b": (430, 1400),
+    "n": (500, 1400),
+    "m": (570, 1400),
+    ".": (570,1500),
+    ",": (150,1500),
+    " ": (400,1500)
+}
+
+
+def tap_keyboard(d, text, keyboard = keyboard_dic):
     """
-    Takes a screenshot of the current screen and saves it to the 'Screenshots' directory.
+    Simulates tapping on the screen using the keyboard coordinates for each character in the text.
     """
-    screenshot_dir = 'Screenshots'
-    if not os.path.exists(screenshot_dir):
-        os.makedirs(screenshot_dir)
-    screenshot_path = os.path.join(screenshot_dir, filename)
-    d.screenshot(screenshot_path)
-    print(f"Screenshot saved to: {screenshot_path}")
-    return screenshot_path
+    for char in text.lower():  # Convert the text to lowercase to match the dictionary keys
+        if char in keyboard:
+            x, y = keyboard[char]
+            d.click(x, y)  # Simulate a tap on the screen at the corresponding coordinates
+            time.sleep(random.uniform(0.04,0.07))  # Add a small delay between taps
+        else:
+            print(f"Character '{char}' not found in keyboard dictionary!")
+
+
+def take_screenshot(d,thread):
+    filename="Screenshots/"+thread+'-screenshot_tik.png'
+    print(f"{thread}:{d.wlan_ip} Taking screenshot...")
+    d.screenshot(filename)
+    print(f"Screenshot saved as {filename}.")
+    return filename
 
 def find_best_and_second_best_match(image_path, users_template_path, d):
     """
@@ -86,7 +127,7 @@ def find_best_and_second_best_match(image_path, users_template_path, d):
     best_coordinates = (best_match[0][0] + w // 2, best_match[0][1] + h // 2)
     best_value = best_match[1]
 
-    print(f"Best match found with value: {best_value} at {best_coordinates}")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Best match found with value: {best_value} at {best_coordinates}")
 
     print(f"{threading.current_thread().name}:{d.wlan_ip} Finished find_best_match function")
     
@@ -98,7 +139,7 @@ def tap_users(d, users_template_path="icons/tiktok_icons/users.png"):
     """
     Takes a screenshot and tries to tap on the like button if found.
     """
-    screenshot_path = take_screenshot(d)
+    screenshot_path = take_screenshot(d,threading.current_thread().name)
     best_match = find_best_and_second_best_match(screenshot_path, users_template_path,d)
     if best_match:
         best_coordinates, best_value = best_match
@@ -121,10 +162,7 @@ def search(d, text):
     
     d.click(x, y)  # Click on the search bar
     time.sleep(2)
-
-    for char in text:
-        d.send_keys(char, clear=False)
-        time.sleep(random.uniform(0.1, 0.3))
+    tap_keyboard(d,text)
     time.sleep(2)
     d.press(66)  # Press the search button
     time.sleep(5)
@@ -139,41 +177,40 @@ def search(d, text):
 
 def tap_like_button(d, like_button_template_path="icons/tiktok_icons/like.png"):
     print(f"{threading.current_thread().name}:{d.wlan_ip} Starting tap_like_button function")
-    screenshot_path = take_screenshot(d)
+    screenshot_path = take_screenshot(d,threading.current_thread().name)
     best_match = find_best_and_second_best_match(screenshot_path, like_button_template_path,d)
     if best_match:
         best_coordinates = best_match[0]
-        print(f"Like button found at {best_coordinates}, tapping...")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Like button found at {best_coordinates}, tapping...")
         d.click(int(best_coordinates[0]), int(best_coordinates[1]))
-        print(f"Tapped best match at {best_coordinates}.")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Tapped best match at {best_coordinates}.")
         time.sleep(1)
     else:
         print(f"{threading.current_thread().name}:{d.wlan_ip} Like button not found on the screen.")
     print(f"{threading.current_thread().name}:{d.wlan_ip} Finished tap_like_button function")
 
-# def comment_text(d, text):
-#     """
-#     Comments on a post.
-#     """
-#     if adb_reset_event.is_set():
-#         print(f"{threading.current_thread().name}:{d.wlan_ip} Paused6 due to ADB reset event.")
-#         time.sleep(10)
-#     acquire_action_lock()  # Acquire the lock
-#     try:
-#         d.click(670, 1000)
-#         print(f"{threading.current_thread().name}:{d.wlan_ip} Clicked on the comment button.")
+def comment_text(d, text):
+    """
+    Comments on a post using the regular keyboard.
+    """
+    d.click(670, 1000)  # Click on the comment button
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Clicked on the comment button.")
+    time.sleep(3)
+    d.click(310, 1500)  # Click on the comment input field
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Commenting: {text}")
+    
+    time.sleep(4)  # Wait for the input field to be ready
+    
+    tap_keyboard(d,text)
+    
+    time.sleep(1)  # Give some time for the input to be registered
+    
+    d.click(650, 1000)  # Click the submit button for the comment
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Comment submitted.")
+    d.press("back")
 
-#         d.click(310, 1500)  # Click on the comment input
-#         print(f"Commenting: {text}")
-#         time.sleep(2)
-#         d.set_input_ime(True)  # Enable fast input method
-#         d.send_keys(text, clear=False)  # Send the comment text directly
-#         d.set_input_ime(False)  # Revert to the default input method after typing
 
-#         time.sleep(1)
-#         d.click(1300 / 1440, 2700 / 3168)  # Click the submit button for the comment
-#     finally:
-#         release_action_lock()  # Ensure the lock is released
+
 
 def scroll_random_number(d):
     """
@@ -185,7 +222,7 @@ def scroll_random_number(d):
     if d(scrollable=True).exists:
         print(f"{threading.current_thread().name}:{d.wlan_ip} Found a scrollable view! Swiping down...")
         num_swipes = random.randint(3, 6)
-        print(f"Number of swipes: {num_swipes}")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Number of swipes: {num_swipes}")
 
         for i in range(num_swipes):
             x_start = screen_width * (500 / 720)
@@ -200,7 +237,7 @@ def scroll_random_number(d):
         print(f"{threading.current_thread().name}:{d.wlan_ip} No scrollable view found!")
 
 
-def scroll_and_like(d):
+def scroll_like_and_comment(d):
     """
     Scrolls the view and likes posts.
     """
@@ -221,9 +258,19 @@ def scroll_and_like(d):
             print(f"{threading.current_thread().name}:{d.wlan_ip} Swiped down {i + 1} time(s).")
         else:
             print(f"{threading.current_thread().name}:{d.wlan_ip} No scrollable view found!")
-        if random.choice([1, 2, 3, 4, 5]) < 5:
+        num = random.choice([1, 2, 3, 4, 5])
+        if  num <= 2:
+            print("like")
             tap_like_button(d)
             time.sleep(1)
+        elif num>2 and num<=4:
+            print("like and comment")
+            tap_like_button(d)
+            time.sleep(1)
+            comment_text(d,random.choice(israel_support_comments))
+            time.sleep(1)
+        else:
+            print("none")
     d.press("back")
     d.press("back")
     time.sleep(2)
@@ -240,7 +287,7 @@ def like_the_page(d, page):
     search(d, page)
     d.click(120, 1300)
     time.sleep(2)
-    scroll_and_like(d)
+    scroll_like_and_comment(d)
 
 def main(d):
     """
@@ -251,13 +298,14 @@ def main(d):
     time.sleep(15)
     if "com.zhiliaoapp.musically" in d.app_list_running():
         print(f"{threading.current_thread().name}:{d.wlan_ip} TikTok is running!")
-        scroll_random_number(d)
-        time.sleep(1)
-        tap_like_button(d)
-        time.sleep(1)
-        like_the_page(d,"hananyaNaftali")
-        scroll_random_number(d)
-        time.sleep(10)
+        for _ in range(3):
+            scroll_random_number(d)
+            time.sleep(1)
+            tap_like_button(d)
+            time.sleep(1)
+            like_the_page(d,random.choice(tiktok_accounts))
+            scroll_random_number(d)
+            time.sleep(10)
         d.app_stop("com.zhiliaoapp.musically")
         time.sleep(4)
     else:

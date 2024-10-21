@@ -2,9 +2,6 @@ import os
 import subprocess
 import time
 
-# Define the starting ADB port and the number of servers/devices
-
-
 
 # List of device IPs to connect to (you need to populate this list with actual IPs)
 device_ips = [
@@ -12,7 +9,7 @@ device_ips = [
     "10.100.102.170",
     "10.100.102.171",
     "10.100.102.172",
-    "10.100.102.173",
+    "10.100.102.173"
 ]
 START_PORT = 5001
 NUM_SERVERS = len(device_ips)
