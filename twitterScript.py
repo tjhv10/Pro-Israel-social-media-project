@@ -238,7 +238,6 @@ def scroll_random_number(d):
         print(f"{threading.current_thread().name}:{d.wlan_ip} No scrollable view found!")
 
 
-
 def search_and_go_to_page(d, page_name):
     """
     Searches for the specified text in Twitter and navigates to the desired page.
@@ -263,11 +262,6 @@ def search_and_go_to_page(d, page_name):
     print(f"{threading.current_thread().name}:{d.wlan_ip} Typed '{page_name}' in the search bar naturally.")
     x,y = search_name(d,"@"+page_name)
     d.click(int(x),int(y))
-    # d.press(66) # Press Enter (key code 66) after typing the search text
-    # time.sleep(5)
-    # d.click(408,234)  # Press people button
-    # time.sleep(3)
-     # Press first result
     print(f"{threading.current_thread().name}:{d.wlan_ip} Got into the page!")
     time.sleep(5)
 
@@ -321,13 +315,13 @@ def main(d):
     # Start the Twitter app
     d.app_start("com.twitter.android")
     print(f"{threading.current_thread().name}:{d.wlan_ip} Opened Twitter!")
-    # time.sleep(12)  # Wait for Twitter to fully load
-    # d.click(75,1500) # Go to home
-    # for _ in range(random.randint(4,10)):
-    #     scroll_random_number(d)
-    #     time.sleep(4)
-    #     tap_like_button(d)
-    #     time.sleep(2)
+    time.sleep(12)  # Wait for Twitter to fully load
+    d.click(75,1500) # Go to home
+    for _ in range(random.randint(4,10)):
+        scroll_random_number(d)
+        time.sleep(4)
+        tap_like_button(d)
+        time.sleep(2)
     time.sleep(2)
     for _ in range(3):
         search_and_go_to_page(d, random.choice(twitter_handles))
