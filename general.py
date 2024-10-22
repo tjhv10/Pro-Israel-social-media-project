@@ -17,9 +17,9 @@ def run_program(device_id):
     d = u2.connect(f"{device_id}:5555")
     
     if d is not None:
-        print(f"Running Twitter script on device: {device_id}")
-        twi.main(d)
-        time.sleep(5)  # Delay between scripts
+        # print(f"Running Twitter script on device: {device_id}")
+        # twi.main(d)
+        # time.sleep(5)  # Delay between scripts
         print(f"Running TikTok script on device: {device_id}")
         tik.main(d)
     else:
@@ -50,7 +50,7 @@ def main():
 
 def main_for_1_phone():
     # Run the program on the specified device
-    run_program("10.100.102.171")
+    run_program("10.0.0.25")
 
 # Uncomment the function you want to run
 # main()

@@ -1,3 +1,11 @@
+import random
+import threading
+import time
+
+import cv2
+import numpy as np
+
+
 israel_support_comments = [
     "Israel has the right to defend itself.",
     "Stand with Israel!",
@@ -122,3 +130,166 @@ israel_support_comments = [
     "Israel deserves justice!",
     "Always with Israel."
 ]
+
+twitter_handles = [
+    "YishaiFleisher",
+    "Israellycool",
+    "DavidM_Friedman",
+    "Ostrov_A",
+    "LahavHarkov",
+    "havivrettiggur",
+    "Gil_Hoffman",
+    "AIPAC",
+    "sfrantzman",
+    "EylonALevy",
+    "FleurHassanN",
+    "khaledAbiToameh",
+    "rich_goldberg",
+    "EVKontorovich",
+    "imshin",
+    "BarakRavid",
+    "MaxAbrahms",
+    "MickyRosenfeld",
+    "RaphaelAhren",
+    "YaakovLappin",
+    "YnetNews",
+    "HananyaNaftali",
+    "AmbDermer",
+    "BoothWilliam",
+    "AnshelPfeffer",
+    "ElhananMiller",
+    "GershonBaskin",
+    "HonestReporting",
+    "Issacharoff",
+    "JeffreyGoldberg",
+    "KhaledAbuToameh",
+    "LahavHarkov",
+    "DannyNis"
+]
+
+tiktok_accounts = [
+    "israel",
+    "powerisrael",
+    "israel_hayom",
+    "tbn_official",
+    "tbn_fr",
+    "tbnua",
+    "cbnnewsofficial",
+    "cbcnews",
+    "newsmaxtv",
+    "hananyanaftali",
+    "rudy_israel",
+    "Shaidavidai",
+    "noybeyleyb",
+    "EylonALevy",
+    "yoavdavis",
+    "millennialmoor",
+    "Jews_of_Ny",
+    "noatishby",
+    "jewishhistory",
+    "houseoflev",
+    "melissaschapman",
+    "jordyntilchen",
+    "Jewisnews",
+    "EndJewHatred",
+    "jew_ishcontent",
+    "alizalicht",
+    "Libbyamberwalker"
+    ]
+
+keyboard_dic = {
+    "q": (40, 1200),
+    "w": (110, 1200),
+    "e": (180, 1200),
+    "r": (250, 1200),
+    "t": (320, 1200),
+    "y": (390, 1200),
+    "u": (460, 1200),
+    "i": (530, 1200),
+    "o": (600, 1200),
+    "p": (670, 1200),
+    "a": (70, 1285),
+    "s": (140, 1285),
+    "d": (210, 1285),
+    "f": (280, 1285),
+    "g": (350, 1285),
+    "h": (420, 1285),
+    "j": (490, 1285),
+    "k": (560, 1285),
+    "l": (630, 1285),
+    "z": (150, 1400),
+    "x": (220, 1400),
+    "c": (290, 1400),
+    "v": (360, 1400),
+    "b": (430, 1400),
+    "n": (500, 1400),
+    "m": (570, 1400),
+    ".": (570,1500),
+    ",": (150,1500),
+    " ": (400,1500)
+}
+
+
+def tap_keyboard(d, text, keyboard = keyboard_dic):
+    """
+    Simulates tapping on the screen using the keyboard coordinates for each character in the text.
+    """
+    for char in text.lower():  # Convert the text to lowercase to match the dictionary keys
+        if char in keyboard:
+            if char == "_":
+                char == " "
+            x, y = keyboard[char]
+            d.click(x, y)  # Simulate a tap on the screen at the corresponding coordinates
+            time.sleep(random.uniform(0.04, 0.07))  # Add a small delay between taps
+        else:
+            print(f"{threading.current_thread().name}:{d.wlan_ip} Character '{char}' not found in keyboard dictionary!")
+
+
+def take_screenshot(d,thread,app):
+    filename = f"Screenshots/{thread}-screenshot_{app}.png"
+    print(f"{thread}:{d.wlan_ip} Taking screenshot...")
+    d.screenshot(filename)
+    print(f"Screenshot saved as {filename}.")
+    return filename
+
+def find_best_match(image_path, users_template_path, d):
+    """
+    Finds the best match of a user's button icon in the screenshot using template matching.
+    """
+    time.sleep(0.5)
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Starting find_best_match function")
+    
+    img = cv2.imread(image_path)
+    template = cv2.imread(users_template_path)
+
+    if img is None or template is None:
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Error loading images.")
+        return None
+
+    h, w = template.shape[:2]
+    result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
+    threshold = 0.8
+    loc = np.where(result >= threshold)
+
+    matches = []
+    for pt in zip(*loc[::-1]):
+        matches.append((pt, result[pt[1], pt[0]]))
+
+    if matches:
+        # Get the best match (highest confidence value)
+        best_match = max(matches, key=lambda x: x[1])
+        best_coordinates = (best_match[0][0] + w // 2, best_match[0][1] + h // 2)
+        best_value = best_match[1]
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Best match found with value: {best_value} at {best_coordinates}")
+    else:
+        # If no matches found above threshold, find the closest match
+        _, max_val, _, max_loc = cv2.minMaxLoc(result)
+        best_coordinates = (max_loc[0] + w // 2, max_loc[1] + h // 2)
+        best_value = max_val
+        print(f"{threading.current_thread().name}:{d.wlan_ip} No matches above threshold, closest match found with value: {best_value} at {best_coordinates}")
+        return None
+    
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Finished find_best_match function")
+    
+    return best_coordinates
+
