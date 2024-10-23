@@ -133,8 +133,7 @@ israel_support_comments = [
 
 twitter_handles = [
     "YishaiFleisher",
-    "Israellycool",
-    "DavidM_Friedman",
+    "DavidMFriedman",
     "Ostrov_A",
     "LahavHarkov",
     "havivrettiggur",
@@ -149,10 +148,10 @@ twitter_handles = [
     "imshin",
     "BarakRavid",
     "MaxAbrahms",
-    "MickyRosenfeld",
+    "mickyrosenfeld",
     "RaphaelAhren",
     "YaakovLappin",
-    "YnetNews",
+    "ynetnews",
     "HananyaNaftali",
     "AmbDermer",
     "BoothWilliam",
@@ -189,12 +188,10 @@ tiktok_accounts = [
     "jewishhistory",
     "houseoflev",
     "melissaschapman",
-    "jordyntilchen",
     "Jewisnews",
     "EndJewHatred",
     "jew_ishcontent",
-    "alizalicht",
-    "Libbyamberwalker"
+    "alizalicht"
     ]
 
 keyboard_dic = {
@@ -234,10 +231,10 @@ def tap_keyboard(d, text, keyboard = keyboard_dic):
     """
     Simulates tapping on the screen using the keyboard coordinates for each character in the text.
     """
-    for char in text.lower():  # Convert the text to lowercase to match the dictionary keys
+    for char in text.lower():
+        if char == "_":
+            char = " "  
         if char in keyboard:
-            if char == "_":
-                char == " "
             x, y = keyboard[char]
             d.click(x, y)  # Simulate a tap on the screen at the corresponding coordinates
             time.sleep(random.uniform(0.04, 0.07))  # Add a small delay between taps

@@ -1,20 +1,10 @@
 import threading
 import numpy as np
 import time
-import cv2
 import random
 from common_area import *
-from PIL import Image
 import easyocr
-import uiautomator2 as u2
-
-
-
-
-
-
-
-
+from fuzzywuzzy import fuzz  # You may need to install this library: pip install fuzzywuzzy
 
 
 def tap_like_button(d, like_button_template_path="icons/twitter_icons/like.png"):
@@ -64,7 +54,7 @@ def scroll_like_and_comment(d):
             print(f"{threading.current_thread().name}:{d.wlan_ip} No scrollable view found!")
         time.sleep(random.uniform(2, 14))
         action = random.choice(actions)
-        print(f"Action chosen: {action}")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Action chosen: {action}")
         text = random.choice(israel_support_comments)
         if action == 'like':
             tap_like_button(d)
@@ -84,6 +74,7 @@ def scroll_like_and_comment(d):
     d.press("back")
     time.sleep(0.5)
     d.press("back")
+    time.sleep(2)
     print(f"{threading.current_thread().name}:{d.wlan_ip} Finished scroll_like_and_comment function")
 
 
@@ -135,13 +126,17 @@ def search_and_go_to_page(d, page_name):
     time.sleep(3)
     # Click on the search input field
     d.click(360, 140)
-    time.sleep(5)
-    # Type each character of the search term with a random delay to simulate human typing
+    time.sleep(3)
+     # Type each character of the search term with a random delay to simulate human typing
     tap_keyboard(d,page_name)
-    time.sleep(2)
+    time.sleep(4)
     print(f"{threading.current_thread().name}:{d.wlan_ip} Typed '{page_name}' in the search bar naturally.")
-    x,y = search_name(d,"@"+page_name)
-    d.click(int(x),int(y))
+    try:
+        x,y = search_name(d,"@"+page_name)
+        d.click(int(x),int(y))
+    except:
+        print("no")
+    
     print(f"{threading.current_thread().name}:{d.wlan_ip} Got into the page!")
     time.sleep(5)
 
@@ -163,27 +158,62 @@ def follow_page(d, follow_template_path="icons/twitter_icons/follow.png"):
     print(f"{threading.current_thread().name}:{d.wlan_ip} Finished follow_page function")
 
 
-def search_name(d, name):
-    screen_shot = take_screenshot(d, threading.current_thread().name,"twi")
+from fuzzywuzzy import fuzz  # You may need to install this library: pip install fuzzywuzzy
+import easyocr
+import threading
+
+
+
+def search_name(d, name, tolerance=20):
+    screen_shot = take_screenshot(d, threading.current_thread().name, "twi")
+    print(f"Searching for name: {name}")
+    
     # Initialize the OCR reader
     reader = easyocr.Reader(['en'])  # You can add more languages if needed
 
     # Perform OCR
     result = reader.readtext(screen_shot, detail=1)  # detail=1 provides bounding box and text
 
+    best_match = None
+    best_similarity = 0  # Initialize with the lowest possible score (0%)
+
+    # Ensure both name and detected text retain special characters like '@'
+    processed_name = name.strip()  # Keep special characters, but strip unnecessary spaces
+
     # Iterate over detected texts
     for detection in result:
         bbox, text, _ = detection
-        if name.lower() in text.lower():
-            # Bounding box gives four points (top-left, top-right, bottom-right, bottom-left)
-            top_left, _, bottom_right, _ = bbox
+        top_left, _, bottom_right, _ = bbox
 
-            # Calculate the center position of the bounding box
-            center_x = (top_left[0] + bottom_right[0]) // 2
-            center_y = (top_left[1] + bottom_right[1]) // 2
-            return (center_x, center_y)
+        # Skip any detected text that is above y=200
+        if top_left[1] < 180:
+            continue  # Ignore this text since it's above the desired y position
 
-    return None  # If the text is not found
+        # Keep special characters in the detected text
+        processed_text = text.strip()
+        if "Go to" in processed_text:
+            processed_text = processed_text.replace("Go to",'')
+        # Compare using fuzzy matching
+        similarity_score = fuzz.ratio(processed_name, processed_text)
+        # Check if the similarity score is the highest and within tolerance
+        if similarity_score > best_similarity and similarity_score >= (100 - tolerance):
+            best_similarity = similarity_score
+            best_match = bbox
+
+    if best_match:
+        # Bounding box gives four points (top-left, top-right, bottom-right, bottom-left)
+        top_left, _, bottom_right, _ = best_match
+
+        # Calculate the center position of the bounding box
+        center_x = (top_left[0] + bottom_right[0]) // 2
+        center_y = (top_left[1] + bottom_right[1]) // 2
+        return (center_x, center_y)
+
+    print("No sufficiently similar text was found.")
+    return None
+
+
+
 
 
 def main(d):
@@ -191,17 +221,17 @@ def main(d):
     The main function connects to the Android device and performs various Twitter actions.
     """
     # Start the Twitter app
-    # d.app_start("com.twitter.android")
-    # print(f"{threading.current_thread().name}:{d.wlan_ip} Opened Twitter!")
+    d.app_start("com.twitter.android")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Opened Twitter!")
     # time.sleep(12)  # Wait for Twitter to fully load
-    # d.click(75,1500) # Go to home
-    # for _ in range(random.randint(4,10)):
-    #     scroll_random_number(d)
-    #     time.sleep(4)
-    #     tap_like_button(d)
-    #     time.sleep(2)
-    # time.sleep(2)
-    for _ in range(2):
+    d.click(75,1500) # Go to home
+    for _ in range(random.randint(1,1)):
+        scroll_random_number(d)
+        time.sleep(4)
+        tap_like_button(d)
+        time.sleep(2)
+    time.sleep(2)
+    for _ in range(8):
         search_and_go_to_page(d, random.choice(twitter_handles))
         time.sleep(2)
         follow_page(d)
@@ -210,7 +240,7 @@ def main(d):
         scroll_like_and_comment(d)
         d.click(75,1500) # Go to home
         time.sleep(4)
-        for _ in range(random.randint(4,10)):
+        for _ in range(random.randint(1,2)):
             scroll_random_number(d)
             time.sleep(2)
             tap_like_button(d)
