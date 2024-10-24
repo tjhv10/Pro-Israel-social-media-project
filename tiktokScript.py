@@ -98,7 +98,7 @@ def scroll_random_number(d):
     
     if d(scrollable=True).exists:
         print(f"{threading.current_thread().name}:{d.wlan_ip} Found a scrollable view! Swiping down...")
-        num_swipes = random.randint(1, 2)
+        num_swipes = random.randint(1, 8)
         print(f"{threading.current_thread().name}:{d.wlan_ip} Number of swipes: {num_swipes}")
 
         for i in range(num_swipes):
@@ -122,7 +122,7 @@ def scroll_like_and_comment(d):
     screen_width = d.info['displayWidth']
     screen_height = d.info['displayHeight']
 
-    for i in range(3):
+    for i in range(30):
         if d(scrollable=True).exists:
             x_start = screen_width * (500 / 720)
             y_start = screen_height * (1200 / 1560)
@@ -165,6 +165,73 @@ def like_the_page(d, page):
     scroll_like_and_comment(d)
 
 
+def report(d, link):
+    # Open TikTok app
+    d.app_start("com.zhiliaoapp.musically")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} :Opened TikTok!")
+    # time.sleep(15)
+
+    if "com.zhiliaoapp.musically" in d.app_list_running():
+        print(f"{threading.current_thread().name}:{d.wlan_ip} TikTok is running!")
+        d.shell(f"am start -a android.intent.action.VIEW -d {link}")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Opened link: {link}")
+        time.sleep(7)
+
+        # Click on the share button
+        d.click(660, 1240)
+        time.sleep(3)
+
+        # Click on the report button
+        d.click(90, 1400)
+        time.sleep(5)
+        
+        # Show the report tree
+        handle_user_selection(report_tiktok_clicks)
+        time.sleep(4)
+        d.app_stop("com.zhiliaoapp.musically")
+
+def handle_user_selection(report_dict):
+    print("Select a report reason:")
+    numbered_report_dict = show_tree(report_dict)
+
+    # User input for selection
+    user_choice = input("Enter the number of the report reason you want to select: ")
+
+    if user_choice.isdigit() and int(user_choice) in numbered_report_dict:
+        action = numbered_report_dict[int(user_choice)]
+        if isinstance(action, dict):  # If the selection has subcategories
+            handle_user_selection(action)  # Show subcategories
+        else:
+            execute_action(action)  # Execute the action for the selected reason
+    else:
+        print("Invalid selection. Please enter a valid number.")
+
+def show_tree(report_dict, level=0):
+    numbered_dict = {}
+    count = 1
+    for key in report_dict.keys():
+        print("  " * level + f"{count}. {key}")
+        numbered_dict[count] = key  # Store the original key for action retrieval
+        count += 1
+        if isinstance(report_dict[key], dict):
+            # Recursive call for subcategories
+            sub_count = show_tree(report_dict[key], level + 1)
+            numbered_dict.update(sub_count)
+    return numbered_dict
+
+def execute_action(reason):
+    # Execute the corresponding action for the selected reason
+    if reason in report_tiktok_clicks:
+        action = report_tiktok_clicks[reason]
+        actions = action.split(':')
+        print(f"Executing action for '{reason}': {actions}")
+        for act in actions:
+            eval(act)
+            time.sleep(2)  
+    else:
+        print("No action found for this reason.")
+    
+
 def main(d):
     """
     Main function to connect to the device and perform actions on TikTok.
@@ -187,5 +254,5 @@ def main(d):
     else:
         print(f"{threading.current_thread().name}:{d.wlan_ip} TikTok is not running!")
     print(f"{threading.current_thread().name}:{d.wlan_ip} done")
-d = u2.connect("10.100.102.175")
-take_screenshot(d,threading.current_thread().name,"tik")
+d = u2.connect("10.100.102.177")
+report(d,"https://vm.tiktok.com/ZMhu2oBxP/")

@@ -5,6 +5,7 @@ import random
 from common_area import *
 import easyocr
 from fuzzywuzzy import fuzz  # You may need to install this library: pip install fuzzywuzzy
+import uiautomator2 as u2
 
 
 def tap_like_button(d, like_button_template_path="icons/twitter_icons/like.png"):
@@ -42,7 +43,7 @@ def comment_text(d, text, comment_template_path="icons/twitter_icons/comment.png
 def scroll_like_and_comment(d):
     print(f"{threading.current_thread().name}:{d.wlan_ip} Starting scroll_like_and_comment function")
     actions = ['like', 'comment', 'both', 'none']
-    for _ in range(1):
+    for _ in range(20):
         if d(scrollable=True).exists:
             start_x = random.randint(400, 600)
             start_y = random.randint(900, 1200)
@@ -71,6 +72,7 @@ def scroll_like_and_comment(d):
             comment_text(d, text)
             print(f"{threading.current_thread().name}:{d.wlan_ip} Commented: {text}")
         time.sleep(3)
+    time.sleep(2)
     d.press("back")
     time.sleep(0.5)
     d.press("back")
@@ -213,7 +215,72 @@ def search_name(d, name, tolerance=20):
     return None
 
 
+def report(d, link):
+    # Open Twitter app
+    d.app_start("com.twitter.android")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} :Opened Twitter!")
+    # time.sleep(15)
 
+    if "com.twitter.android" in d.app_list_running():
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Twitter is running!")
+        
+        
+        
+        # Open the tweet in the Twitter app
+        d.shell(f"am start -a android.intent.action.VIEW -d '{link}'")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Opened tweet: {link}")
+        time.sleep(3)
+        # Click on the share button
+        d.click(685, 210)
+        time.sleep(3)
+
+        # # Click on the report button
+        d.click(370, 1380)
+        time.sleep(8)
+        handle_user_selection(report_twitter_clicks)
+        time.sleep(4)
+        d.app_stop("com.twitter.android")
+
+def handle_user_selection(report_dict):
+    print("Select a report reason:")
+    numbered_report_dict = show_tree(report_dict)
+
+    # User input for selection
+    user_choice = input("Enter the number of the report reason you want to select: ")
+
+    if user_choice.isdigit() and int(user_choice) in numbered_report_dict:
+        action = numbered_report_dict[int(user_choice)]
+        if isinstance(action, dict):  # If the selection has subcategories
+            handle_user_selection(action)  # Show subcategories
+        else:
+            execute_action(action)  # Execute the action for the selected reason
+    else:
+        print("Invalid selection. Please enter a valid number.")
+
+def show_tree(report_dict, level=0):
+    numbered_dict = {}
+    count = 1
+    for key in report_dict.keys():
+        print("  " * level + f"{count}. {key}")
+        numbered_dict[count] = key  # Store the original key for action retrieval
+        count += 1
+        if isinstance(report_dict[key], dict):
+            # Recursive call for subcategories
+            sub_count = show_tree(report_dict[key], level + 1)
+            numbered_dict.update(sub_count)
+    return numbered_dict
+
+def execute_action(reason):
+    # Execute the corresponding action for the selected reason
+    if reason in report_twitter_clicks:
+        action = report_twitter_clicks[reason]
+        actions = action.split(':')
+        print(f"Executing action for '{reason}': {actions}")
+        for act in actions:
+            eval(act)
+            time.sleep(2)  
+    else:
+        print("No action found for this reason.")
 
 
 def main(d):
@@ -223,9 +290,9 @@ def main(d):
     # Start the Twitter app
     d.app_start("com.twitter.android")
     print(f"{threading.current_thread().name}:{d.wlan_ip} Opened Twitter!")
-    # time.sleep(12)  # Wait for Twitter to fully load
+    time.sleep(12)  # Wait for Twitter to fully load
     d.click(75,1500) # Go to home
-    for _ in range(random.randint(1,1)):
+    for _ in range(random.randint(4,10)):
         scroll_random_number(d)
         time.sleep(4)
         tap_like_button(d)
@@ -240,7 +307,7 @@ def main(d):
         scroll_like_and_comment(d)
         d.click(75,1500) # Go to home
         time.sleep(4)
-        for _ in range(random.randint(1,2)):
+        for _ in range(random.randint(1,12)):
             scroll_random_number(d)
             time.sleep(2)
             tap_like_button(d)
@@ -248,3 +315,5 @@ def main(d):
         time.sleep(5)
     d.app_stop("com.twitter.android")
     time.sleep(4)
+d = u2.connect("10.100.102.177")
+report(d,"https://x.com/marwanbishara/status/1805202165054493148?t=zbQJshyDikFcHUFcMKC1yg&s=19")
