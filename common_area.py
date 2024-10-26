@@ -194,6 +194,48 @@ tiktok_accounts = [
     "alizalicht"
     ]
 
+instagram_accounts = [
+    "rudy_israel",
+    "Shaidavidai",
+    "adelacojab",
+    "EylonALevy",
+    "Kami.Soprano",
+    "yoavdavis",
+    "millennialmoor",
+    "Jews_of_Ny",
+    "noatishby",
+    "jewishhistory",
+    "houseoflev",
+    "melissaschapman",
+    "EndJewHatred",
+    "wearetov",
+    "idf",
+    "fleurhassann",
+    "standwithus",
+    "israelinternational", 
+    "standwithus", 
+    "israel", 
+    "israeltodaymag", 
+    "jewishagency", 
+    "myisrael", 
+    "theisraelproject", 
+    "honestreporting", 
+    "beyondtheheadline", 
+    "israelcouncil", 
+    "israeldaily", 
+    "hasbara", 
+    "nifusa", 
+    "wiesenthalcenter", 
+    "maccabiusa", 
+    "aipac", 
+    "Birthrightisraelbeyond", 
+    "sderotmovie", 
+    "friends_of_israel", 
+    "thejewishjournal",
+    "ariseforisrael",
+]
+
+
 keyboard_dic = {
     "q": (40, 1200),
     "w": (110, 1200),

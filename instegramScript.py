@@ -44,9 +44,6 @@ def scroll_random_number(d):
             print(f"Waiting {random_time} seconds...")
             time.sleep(random_time)  # Pause between swipes
             print(f"Swiped down {i + 1} time(s).")
-        
-        # Swipe up to return to the previous content
-        d.swipe(500, rnd_swipe - 900, 500, rnd_swipe, duration = 0.05)
     else:
         print("No scrollable view found!")
 
@@ -104,14 +101,16 @@ def search_and_go_to_account(d, name):
     screen_height = d.info['displayHeight']
     
     # Calculate the coordinates as percentages of the screen resolution
-    x = screen_width * (434 / 1440)  # Approximate X coordinate for the search bar
-    y = screen_height * (2900 / 3168)  # Approximate Y coordinate for the search bar
-    d.click(x, y)  # Click on the search bar
+    d.click(215, 1515)  # Click on the search bar
+    time.sleep(1)
+    d.click(215, 1515)  # Click on the search bar
     time.sleep(2)
+
     # Calculate the coordinates as percentages of the screen resolution
     x = screen_width / 2  # Approximate X coordinate for the search bar
     y = screen_height * (300 / 3168)  # Approximate Y coordinate for the search bar
     d.click(x, y)  # Click on the search bar
+      # Click on the search bar
     time.sleep(3)
     # Type each character of the search term with a random delay
     tap_keyboard(d,name)
@@ -120,10 +119,16 @@ def search_and_go_to_account(d, name):
     time.sleep(3)
     d.click(245, 225) # Press the accounts button
     time.sleep(3)
-    x,y = search_name(d,name) 
+    try:
+        x,y = search_name(d,name) 
+        print("Found account!")
+    except:
+        search_and_go_to_account(d,random.choice(instagram_accounts))
     d.click(int(x),int(y))
     time.sleep(2)
-    d.click(120,1200)
+    d.swipe(500, 1200, 500, 200, duration = 0.03)
+    time.sleep(5)
+    d.click(120,500)
 
 
 
@@ -155,37 +160,49 @@ def comment_text(d,text, comment_template_path="icons\instagram_icons\comment.pn
     comment_template_path (str): Path to the comment icon template image.
     """
     # Take a screenshot of the current screen
-    screenshot_path = take_screenshot(d)
+    screenshot_path = take_screenshot(d,threading.current_thread().name,"inst")
     
     # Find the best match for the comment icon in the screenshot
-    coordinates, _ = find_best_match(screenshot_path, comment_template_path)
-
+    coordinates = find_best_match(screenshot_path, comment_template_path,d)
+    time.sleep(2)
     # If the comment icon was found, tap on it
-    if coordinates[0]:
-        d.click(int(coordinates[0][0]), int(coordinates[0][1]))  # Tap the comment button
+    if coordinates:
+        d.click(int(coordinates[0]), int(coordinates[1]))  # Tap the comment button
     else:
         print("Comment not found on the screen.")
     time.sleep(2)
-    tap_keyboard(d,text)
-    time.sleep(1)
-    d.press(66)
-    time.sleep(1)
-    d.press("back")
-    time.sleep(1)
-    d.press("back")
-    time.sleep(1)
+    screenshot_path = take_screenshot(d,threading.current_thread().name,"inst")
+    
+    # Find the best match for the comment icon in the screenshot
+    num_coordinates = find_best_match(screenshot_path, "icons/instagram_icons/num.png",d)
+    if num_coordinates != None:
+        time.sleep(2)
+        tap_keyboard(d,text)
+        time.sleep(1)
+        d.press(66)
+        time.sleep(1)
+        d.press("back")
+        time.sleep(1)
+    if coordinates !=  None:
+        d.press("back")
+        time.sleep(2)
 
-def scroll_and_like(d):
+def scroll_like_and_comment(d):
     """
     Scrolls the screen and tries to like a tweet after each scroll by tapping the like button.
 
     Parameters:
     d (uiautomator2.Device): The connected device object from uiautomator2.
     """
-    for i in range(10):  # Repeat the process 100 times (or however many times you'd like)
+    for _ in range(10):
         scroll_once(d)  # Scroll down once
         time.sleep(3)  # Wait 1 second between actions
-        tap_like_button(d)  # Try to tap the like button to like the post
+        num = random.choice([1,2,3,4,5]) 
+        if num<=4:
+            tap_like_button(d)
+            if num>2:
+                time.sleep(3)
+                comment_text(d,random.choice(israel_support_comments))  # Try to tap the like button to like the post
         time.sleep(1)  # Wait 2 seconds after tapping
     d.press("back")
     time.sleep(1)
@@ -231,25 +248,25 @@ def main():
     # Start the Instagram app
     d.app_start("com.instagram.android")
     print("Opened Instagram!")
-    time.sleep(7)  # Wait for Instagram to fully load
-    scroll_random_number(d)
-    time.sleep(2)
-    tap_like_button(d)
-    time.sleep(7)
-    search_and_go_to_account(d,"idf")
-    time.sleep(3)
-    scroll_and_like(d)
-    time.sleep(3)
-    scroll_random_number(d)
-    tap_like_button(d)
-    scroll_random_number(d)
+    for _ in range(5):
+        time.sleep(7)  # Wait for Instagram to fully load
+        scroll_random_number(d)
+        time.sleep(2)
+        tap_like_button(d)
+        time.sleep(7)
+        search_and_go_to_account(d,random.choice(instagram_accounts))
+        time.sleep(3)
+        scroll_like_and_comment(d)
+        time.sleep(3)
+        scroll_random_number(d)
+        tap_like_button(d)
+        scroll_random_number(d)
     d.app_stop("com.instagram.android")
 
 
 # Uncomment this line to run the main function
-# main()
+main()
 
 # Example of performing a comment action:
-d = u2.connect("10.100.102.178")  # Use the IP address of your device
-time.sleep(1)
-report(d,"https://www.instagram.com/p/DAUlsozStez/?igsh=ZG9xbncxajNwNmRv")
+# d = u2.connect("10.100.102.178")  # Use the IP address of your device
+# time.sleep(1)
