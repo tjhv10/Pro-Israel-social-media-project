@@ -1,6 +1,8 @@
 import uiautomator2 as u2
 import time
 from common_area import *
+from fuzzywuzzy import fuzz
+import easyocr
 
 def scroll_once(d):
     """
@@ -48,8 +50,49 @@ def scroll_random_number(d):
     else:
         print("No scrollable view found!")
 
+def search_name(d, name, tolerance=20):
+    screen_shot = take_screenshot(d, threading.current_thread().name, "inst")
+    print(f"Searching for name: {name}")
+    
+    # Initialize the OCR reader
+    reader = easyocr.Reader(['en'])  # You can add more languages if needed
 
-def search_and_go_to_account(d, text):
+    # Perform OCR
+    result = reader.readtext(screen_shot, detail=1)  # detail=1 provides bounding box and text
+
+    best_match = None
+    best_similarity = 0  # Initialize with the lowest possible score (0%)
+
+    # Ensure both name and detected text retain special characters like '@'
+    processed_name = name.strip()  # Keep special characters, but strip unnecessary spaces
+
+    # Iterate over detected texts
+    for detection in result:
+        bbox, text, _ = detection
+        top_left, _, bottom_right, _ = bbox
+        # Skip any detected text that is above y=200
+        if top_left[1] < 180:
+            continue  # Ignore this text since it's above the desired y position
+        # Compare using fuzzy matching
+        similarity_score = fuzz.ratio(processed_name, text)
+        # Check if the similarity score is the highest and within tolerance
+        if similarity_score > best_similarity and similarity_score >= (100 - tolerance):
+            best_similarity = similarity_score
+            best_match = bbox
+
+    if best_match:
+        # Bounding box gives four points (top-left, top-right, bottom-right, bottom-left)
+        top_left, _, bottom_right, _ = best_match
+
+        # Calculate the center position of the bounding box
+        center_x = (top_left[0] + bottom_right[0]) // 2
+        center_y = (top_left[1] + bottom_right[1]) // 2
+        return (center_x, center_y)
+
+    print("No sufficiently similar text was found.")
+    return None
+
+def search_and_go_to_account(d, name):
     """
     Searches for a specific user on TikTok by simulating clicks and typing.
 
@@ -71,16 +114,17 @@ def search_and_go_to_account(d, text):
     d.click(x, y)  # Click on the search bar
     time.sleep(3)
     # Type each character of the search term with a random delay
-    tap_keyboard(d,text)
+    tap_keyboard(d,name)
     time.sleep(1)
     d.press(66)  # Press the search button
     time.sleep(3)
     d.click(245, 225) # Press the accounts button
     time.sleep(3)
-    # Click to go into the first result
-    d.click(360,300)  # Coordinates for the first user result
+    x,y = search_name(d,name) 
+    d.click(int(x),int(y))
     time.sleep(2)
     d.click(120,1200)
+
 
 
 def tap_like_button(d, like_button_template_path="icons\instagram_icons\like.png"):
@@ -152,12 +196,36 @@ def scroll_and_like(d):
     d.press("back")
     time.sleep(1)
 
+def report(d, link):
+    # Open Twitter app
+    d.app_start("com.instagram.android")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} :Opened Instagram!")
+    # time.sleep(15)
+
+    if "com.instagram.android" in d.app_list_running():
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Instagram is running!")
+
+        # Open the tweet in the Twitter app
+        d.shell(f"am start -a android.intent.action.VIEW -d '{link}'")
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Opened: {link}")
+        time.sleep(3)
+        # Click on the share button
+        d.click(685, 210)
+        time.sleep(3)
+
+        # # Click on the report button
+        d.click(370, 1500)
+        time.sleep(8)
+        handle_user_selection(d,report_instagram_clicks)
+        time.sleep(4)
+        d.app_stop("com.twitter.android")
+
 def main():
     """
     The main function connects to the Android device and performs various Instagram actions.
     """
     # Connect to the Android device using its IP address (make sure your device is connected via ADB over Wi-Fi)
-    d = u2.connect("10.100.102.177")  # Replace with your device's IP address
+    d = u2.connect("10.100.102.178")  # Replace with your device's IP address
     time.sleep(1)
 
     # Start the Instagram app
@@ -179,9 +247,9 @@ def main():
 
 
 # Uncomment this line to run the main function
-main()
+# main()
 
 # Example of performing a comment action:
-# d = u2.connect("10.100.102.168")  # Use the IP address of your device
-# time.sleep(1)
-# tap_like_button(d)
+d = u2.connect("10.100.102.178")  # Use the IP address of your device
+time.sleep(1)
+report(d,"https://www.instagram.com/p/DAUlsozStez/?igsh=ZG9xbncxajNwNmRv")

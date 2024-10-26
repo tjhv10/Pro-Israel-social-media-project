@@ -266,6 +266,19 @@ report_twitter_clicks = {
     "Violent & hateful entities":"d.swipe(500, 1200, 500, 300, duration=0.05):d.click(370,1450):d.click(370,1240):d.click(370,1450):d.click(370,1450)"
 }
 
+report_instagram_clicks = {
+    "bullying or harassment":"d.click(370,750):d.click(370,660):d.click(370,614):d.click(370,1481)",
+    "Credible threat to safty":"d.click(370,930):d.click(370,571):d.click(370,1481)",
+    "Seems like terrorism or organized crime":"d.click(370,930):d.click(370,658):d.click(370,1481)",
+    "Calling for violence":"d.click(370,930):d.click(370,838):d.click(370,1481)",
+    "Hate speech or symbols":"d.click(370,930):d.click(370,931):d.click(370,1481)",
+    "Showing violence, death or severe injury":"d.click(370,930):d.click(370,1021):d.click(370,1481)",
+    "False information-Health":"d.click(370,1286):d.click(370,520):d.click(370,1440)",
+    "False information-Politics":"d.click(370,1286):d.click(370,613):d.click(370,1440)",
+    "False information-Social issues":"d.click(370,1286):d.click(370,700):d.click(370,1440)",
+    "False information-Digitally created or altered":"d.click(370,1286):d.click(370,800):d.click(370,1440)",
+}
+
 def tap_keyboard(d, text, keyboard = keyboard_dic):
     """
     Simulates tapping on the screen using the keyboard coordinates for each character in the text.
@@ -329,3 +342,44 @@ def find_best_match(image_path, users_template_path, d):
     
     return best_coordinates
 
+def handle_user_selection(d,report_dict):
+    print("Select a report reason:")
+    numbered_report_dict = show_tree(report_dict)
+
+    # User input for selection
+    user_choice = input("Enter the number of the report reason you want to select: ")
+
+    if user_choice.isdigit() and int(user_choice) in numbered_report_dict:
+        action = numbered_report_dict[int(user_choice)]
+        if isinstance(action, dict):  # If the selection has subcategories
+            handle_user_selection(action)  # Show subcategories
+        else:
+            execute_action(d,action,report_dict)  # Execute the action for the selected reason
+    else:
+        print("Invalid selection. Please enter a valid number.")
+
+def show_tree(report_dict, level=0):
+    numbered_dict = {}
+    count = 1
+    for key in report_dict.keys():
+        print("  " * level + f"{count}. {key}")
+        numbered_dict[count] = key  # Store the original key for action retrieval
+        count += 1
+        if isinstance(report_dict[key], dict):
+            # Recursive call for subcategories
+            sub_count = show_tree(report_dict[key], level + 1)
+            numbered_dict.update(sub_count)
+    return numbered_dict
+
+def execute_action(d,reason,report_dict):
+    # Execute the corresponding action for the selected reason
+    if reason in report_dict:
+        action = report_dict[reason]
+        actions = action.split(':')
+        print(f"Executing action for '{reason}': {actions}")
+        time.sleep(1)
+        for act in actions:
+            exec(act)
+            time.sleep(3)  
+    else:
+        print("No action found for this reason.")

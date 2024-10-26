@@ -190,48 +190,6 @@ def report(d, link):
         time.sleep(4)
         d.app_stop("com.zhiliaoapp.musically")
 
-def handle_user_selection(report_dict):
-    print("Select a report reason:")
-    numbered_report_dict = show_tree(report_dict)
-
-    # User input for selection
-    user_choice = input("Enter the number of the report reason you want to select: ")
-
-    if user_choice.isdigit() and int(user_choice) in numbered_report_dict:
-        action = numbered_report_dict[int(user_choice)]
-        if isinstance(action, dict):  # If the selection has subcategories
-            handle_user_selection(action)  # Show subcategories
-        else:
-            execute_action(action)  # Execute the action for the selected reason
-    else:
-        print("Invalid selection. Please enter a valid number.")
-
-def show_tree(report_dict, level=0):
-    numbered_dict = {}
-    count = 1
-    for key in report_dict.keys():
-        print("  " * level + f"{count}. {key}")
-        numbered_dict[count] = key  # Store the original key for action retrieval
-        count += 1
-        if isinstance(report_dict[key], dict):
-            # Recursive call for subcategories
-            sub_count = show_tree(report_dict[key], level + 1)
-            numbered_dict.update(sub_count)
-    return numbered_dict
-
-def execute_action(reason):
-    # Execute the corresponding action for the selected reason
-    if reason in report_tiktok_clicks:
-        action = report_tiktok_clicks[reason]
-        actions = action.split(':')
-        print(f"Executing action for '{reason}': {actions}")
-        for act in actions:
-            eval(act)
-            time.sleep(2)  
-    else:
-        print("No action found for this reason.")
-    
-
 def main(d):
     """
     Main function to connect to the device and perform actions on TikTok.
