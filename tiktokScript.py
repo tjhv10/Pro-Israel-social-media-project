@@ -160,7 +160,7 @@ def scroll_like_and_comment(d):
     d.press("back")
 
 
-def like_the_page(d, page):
+def like_a_page(d, page):
     search(d, page)
     time.sleep(2)
     d.click(120, 1300) # Get in the first page
@@ -208,7 +208,7 @@ def main(d):
             # time.sleep(1)
             # tap_like_button(d)
             time.sleep(4)
-            like_the_page(d,random.choice(tiktok_accounts))
+            like_a_page(d,random.choice(tiktok_accounts))
             scroll_random_number(d)
             time.sleep(10)
         d.app_stop("com.zhiliaoapp.musically")

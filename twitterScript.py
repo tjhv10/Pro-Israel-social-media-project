@@ -258,7 +258,7 @@ def main(d):
     for _ in range(random.randint(4,10)):
         scroll_random_number(d)
         time.sleep(4)
-        tap_like_button(d)
+        # tap_like_button(d)
         time.sleep(2)
     time.sleep(2)
     for _ in range(8):
@@ -273,7 +273,7 @@ def main(d):
         for _ in range(random.randint(1,12)):
             scroll_random_number(d)
             time.sleep(2)
-            tap_like_button(d)
+            # tap_like_button(d)
             time.sleep(2)
         time.sleep(5)
     d.app_stop("com.twitter.android")
