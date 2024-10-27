@@ -212,5 +212,5 @@ def main(d):
     else:
         print(f"{threading.current_thread().name}:{d.wlan_ip} TikTok is not running!")
     print(f"{threading.current_thread().name}:{d.wlan_ip} done")
-d = u2.connect("10.100.102.177")
-report(d,"https://vm.tiktok.com/ZMhu2oBxP/")
+# d = u2.connect("10.100.102.177")
+# report(d,"https://vm.tiktok.com/ZMhu2oBxP/")

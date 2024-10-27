@@ -2,17 +2,24 @@ import os
 import subprocess
 import time
 
+def get_connected_devices():
+    try:
+        result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
+        devices = []
+        
+        # Parse the output, skipping the first line as it's just a header
+        for line in result.stdout.splitlines()[1:]:
+            if "device" in line and not line.startswith("List of devices attached"):
+                device_id = line.split()[0]
+                devices.append(device_id)
+                
+        return devices
+    except Exception as e:
+        print(f"Error getting connected devices: {e}")
+        return []
 
 # List of device IPs to connect to (you need to populate this list with actual IPs)
-device_ips = [
-    # "10.100.102.169",
-    # "10.100.102.170",
-    # "10.100.102.171",
-    # "10.100.102.172",
-    # "10.100.102.173",
-    "10.100.102.175",
-    "10.100.102.176"
-]
+device_ips = get_connected_devices()
 START_PORT = 5001
 NUM_SERVERS = len(device_ips)
 def start_adb_server(port):

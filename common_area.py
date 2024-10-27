@@ -199,40 +199,28 @@ instagram_accounts = [
     "Shaidavidai",
     "adelacojab",
     "EylonALevy",
-    "Kami.Soprano",
     "yoavdavis",
     "millennialmoor",
     "Jews_of_Ny",
     "noatishby",
     "jewishhistory",
-    "houseoflev",
     "melissaschapman",
     "EndJewHatred",
     "wearetov",
     "idf",
     "fleurhassann",
     "standwithus",
-    "israelinternational", 
-    "standwithus", 
     "israel", 
     "israeltodaymag", 
     "jewishagency", 
-    "myisrael", 
-    "theisraelproject", 
     "honestreporting", 
     "beyondtheheadline", 
-    "israelcouncil", 
-    "israeldaily", 
-    "hasbara", 
-    "nifusa", 
-    "wiesenthalcenter", 
+    "simonwiesenthalcenter", 
     "maccabiusa", 
     "aipac", 
     "Birthrightisraelbeyond", 
-    "sderotmovie", 
-    "friends_of_israel", 
-    "thejewishjournal",
     "ariseforisrael",
+    "houseoflev"
 ]
 
 
@@ -337,6 +325,7 @@ def tap_keyboard(d, text, keyboard = keyboard_dic):
 
 
 def take_screenshot(d,thread,app):
+    time.sleep(2)
     filename = f"Screenshots/{thread}-screenshot_{app}.png"
     print(f"{thread}:{d.wlan_ip} Taking screenshot...")
     d.screenshot(filename)

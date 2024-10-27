@@ -2,6 +2,7 @@ import threading
 import time
 import tiktokScript as tik
 import twitterScript as twi
+import instegramScript as inst
 import uiautomator2 as u2
 from start_adb import *
 
@@ -14,14 +15,17 @@ def run_program(device_id):
     print(f"Attempting to connect to device: {device_id}")
     
     # Connect to the device
-    d = u2.connect(f"{device_id}:5555")
+    d = u2.connect(device_id)
     
     if d is not None:
-        print(f"Running Twitter script on device: {device_id}")
+        # print(f"Running Twitter script on device: {device_id}")
         # twi.main(d)
         # time.sleep(5)  # Delay between scripts
-        print(f"Running TikTok script on device: {device_id}")
-        tik.main(d)
+        # print(f"Running TikTok script on device: {device_id}")
+        # tik.main(d)
+        print(f"Running Instagram script on device: {device_id}")
+        inst.main(d)
+        
     else:
         print(f"Could not connect to device: {device_id}")
 

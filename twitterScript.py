@@ -273,5 +273,5 @@ def main(d):
         time.sleep(5)
     d.app_stop("com.twitter.android")
     time.sleep(4)
-d = u2.connect("10.100.102.178")
-report(d,"https://x.com/marwanbishara/status/1805202165054493148?t=zbQJshyDikFcHUFcMKC1yg&s=19")
+# d = u2.connect("10.100.102.178")
+# report(d,"https://x.com/marwanbishara/status/1805202165054493148?t=zbQJshyDikFcHUFcMKC1yg&s=19")

@@ -101,11 +101,10 @@ def search_and_go_to_account(d, name):
     screen_height = d.info['displayHeight']
     
     # Calculate the coordinates as percentages of the screen resolution
-    d.click(215, 1515)  # Click on the search bar
+    d.click(215, 1515)  # Click on the search button
     time.sleep(1)
-    d.click(215, 1515)  # Click on the search bar
-    time.sleep(2)
-
+    d.click(215, 1515)  # Click on the search button
+    time.sleep(3)
     # Calculate the coordinates as percentages of the screen resolution
     x = screen_width / 2  # Approximate X coordinate for the search bar
     y = screen_height * (300 / 3168)  # Approximate Y coordinate for the search bar
@@ -116,18 +115,18 @@ def search_and_go_to_account(d, name):
     tap_keyboard(d,name)
     time.sleep(1)
     d.press(66)  # Press the search button
-    time.sleep(3)
+    time.sleep(5)
     d.click(245, 225) # Press the accounts button
-    time.sleep(3)
+    time.sleep(5)
     try:
         x,y = search_name(d,name) 
         print("Found account!")
     except:
         search_and_go_to_account(d,random.choice(instagram_accounts))
     d.click(int(x),int(y))
-    time.sleep(2)
-    d.swipe(500, 1200, 500, 200, duration = 0.03)
     time.sleep(5)
+    d.swipe(500, 1400, 500, 100, duration = 0.02)
+    time.sleep(4)
     d.click(120,500)
 
 
@@ -186,6 +185,7 @@ def comment_text(d,text, comment_template_path="icons\instagram_icons\comment.pn
     if coordinates !=  None:
         d.press("back")
         time.sleep(2)
+    time.sleep(2)
 
 def scroll_like_and_comment(d):
     """
@@ -194,7 +194,7 @@ def scroll_like_and_comment(d):
     Parameters:
     d (uiautomator2.Device): The connected device object from uiautomator2.
     """
-    for _ in range(10):
+    for _ in range(2):
         scroll_once(d)  # Scroll down once
         time.sleep(3)  # Wait 1 second between actions
         num = random.choice([1,2,3,4,5]) 
@@ -237,18 +237,14 @@ def report(d, link):
         time.sleep(4)
         d.app_stop("com.twitter.android")
 
-def main():
+def main(d):
     """
     The main function connects to the Android device and performs various Instagram actions.
     """
     # Connect to the Android device using its IP address (make sure your device is connected via ADB over Wi-Fi)
-    d = u2.connect("10.100.102.178")  # Replace with your device's IP address
-    time.sleep(1)
-
-    # Start the Instagram app
     d.app_start("com.instagram.android")
     print("Opened Instagram!")
-    for _ in range(5):
+    for _ in range(10):
         time.sleep(7)  # Wait for Instagram to fully load
         scroll_random_number(d)
         time.sleep(2)
@@ -265,7 +261,7 @@ def main():
 
 
 # Uncomment this line to run the main function
-main()
+# main()
 
 # Example of performing a comment action:
 # d = u2.connect("10.100.102.178")  # Use the IP address of your device
