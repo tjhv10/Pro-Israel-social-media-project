@@ -53,6 +53,7 @@ def tap_like_button(d, like_button_template_path="icons/tiktok_icons/like.png"):
         print(f"{threading.current_thread().name}:{d.wlan_ip} Like button found at {best_coordinates}, tapping...")
         d.click(int(best_coordinates[0]), int(best_coordinates[1]))
         print(f"{threading.current_thread().name}:{d.wlan_ip} Tapped best match at {best_coordinates}.")
+        update_results_file("Likes")
         time.sleep(1)
     else:
         print(f"{threading.current_thread().name}:{d.wlan_ip} Like button not found on the screen.")
@@ -81,6 +82,8 @@ def comment_text(d, text,send_button_template_path="icons/tiktok_icons/send.png"
         print(f"{threading.current_thread().name}:{d.wlan_ip} Send button found at {best_coordinates}, tapping...")
         d.click(int(best_coordinates[0]), int(best_coordinates[1]))
         print(f"{threading.current_thread().name}:{d.wlan_ip} Tapped best match at {best_coordinates}.")
+        time.sleep(1)
+        update_results_file("Comments")
         time.sleep(1)
     else:
         print(f"{threading.current_thread().name}:{d.wlan_ip} Send button not found on the screen.")
@@ -188,6 +191,7 @@ def report(d, link):
         # Show the report tree
         handle_user_selection(report_tiktok_clicks)
         time.sleep(4)
+        update_results_file("Reports")
         d.app_stop("com.zhiliaoapp.musically")
 
 def main(d):

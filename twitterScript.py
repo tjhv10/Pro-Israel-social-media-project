@@ -19,6 +19,7 @@ def tap_like_button(d, like_button_template_path="icons/twitter_icons/like.png")
         print(f"{threading.current_thread().name}:{d.wlan_ip} Like button found at {best_cordinates}, tapping...")
         d.click(int(best_cordinates[0]), int(best_cordinates[1]))
         print(f"{threading.current_thread().name}:{d.wlan_ip} Tapped best match at {best_cordinates}.")
+        update_results_file("Likes")
     else:
         print(f"{threading.current_thread().name}:{d.wlan_ip} Like button not found on the screen.")
     
@@ -33,6 +34,8 @@ def comment_text(d, text, comment_template_path="icons/twitter_icons/comment.png
         d.click(int(best_match[0]), int(best_match[1]))  # Unpack directly
         time.sleep(2)
         tap_keyboard(d,text) 
+        time.sleep(1)
+        update_results_file("Comments")
         time.sleep(1)
         d.click(600, 125)  # Click the post button
     else:
@@ -151,6 +154,7 @@ def follow_page(d, follow_template_path="icons/twitter_icons/follow.png"):
         if  num <= 3:
             d.click(int(best_match[0]), int(best_match[1]))
             print(f"{threading.current_thread().name}:{d.wlan_ip} Followed account!")
+            update_results_file("Follows")
             time.sleep(1)
         else:
             print(f"{threading.current_thread().name}:{d.wlan_ip} didn't followed account!")
@@ -237,6 +241,7 @@ def report(d, link):
         time.sleep(8)
         handle_user_selection(report_twitter_clicks)
         time.sleep(4)
+        update_results_file("Reports")
         d.app_stop("com.twitter.android")
 
 

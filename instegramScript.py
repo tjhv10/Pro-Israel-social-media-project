@@ -127,8 +127,8 @@ def search_and_go_to_account(d, name):
     time.sleep(5)
     num = random.choice([1,2,3])
     if num >=2:
-        pass
-    time.sleep(2)
+        follow_page(d)
+    time.sleep(4)
     d.swipe(500, 1400, 500, 100, duration = 0.02)
     time.sleep(4)
     d.click(120,500)
@@ -249,11 +249,13 @@ def follow_page(d, follow_template_path="icons/instagram_icons/follow.png"):
     print(f"{threading.current_thread().name}:{d.wlan_ip} Starting follow_page function")
     screenshot_path = take_screenshot(d,threading.current_thread().name,"inst")
     best_match = find_best_match(screenshot_path, follow_template_path,d)
+    if not best_match:
+        best_match = find_best_match(screenshot_path, "icons/instagram_icons/follow_small.png",d)
     if best_match:
         d.click(int(best_match[0]), int(best_match[1]))
         print(f"{threading.current_thread().name}:{d.wlan_ip} Followed account!")
-        time.sleep(1)
         time.sleep(2)
+        update_results_file("Follows")
     else:
         print(f"{threading.current_thread().name}:{d.wlan_ip} Follow icon not found on the screen.")
     print(f"{threading.current_thread().name}:{d.wlan_ip} Finished follow_page function")
@@ -281,10 +283,5 @@ def main(d):
     d.app_stop("com.instagram.android")
 
 
-# Uncomment this line to run the main function
-# main()
-
-# Example of performing a comment action:
-d = u2.connect("10.100.102.178")  # Use the IP address of your device
-time.sleep(1)
-take_screenshot(d)
+# main(u2.connect("10.100.102.178"))
+follow_page(u2.connect("10.100.102.178"))

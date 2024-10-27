@@ -1,7 +1,6 @@
 import random
 import threading
 import time
-
 import cv2
 import numpy as np
 
@@ -195,32 +194,32 @@ tiktok_accounts = [
     ]
 
 instagram_accounts = [
-    "rudy_israel",
-    "Shaidavidai",
-    "adelacojab",
-    "EylonALevy",
-    "yoavdavis",
-    "millennialmoor",
-    "Jews_of_Ny",
-    "noatishby",
-    "jewishhistory",
-    "melissaschapman",
-    "EndJewHatred",
-    "wearetov",
-    "idf",
-    "fleurhassann",
-    "standwithus",
-    "israel", 
-    "israeltodaymag", 
-    "jewishagency", 
-    "honestreporting", 
-    "beyondtheheadline", 
-    "simonwiesenthalcenter", 
-    "maccabiusa", 
+    # "rudy_israel",
+    # "Shaidavidai",
+    # "adelacojab",
+    # "EylonALevy",
+    # "yoavdavis",
+    # "millennialmoor",
+    # "Jews_of_Ny",
+    # "noatishby",
+    # "jewishhistory",
+    # "melissaschapman",
+    # "EndJewHatred",
+    # "wearetov",
+    # "idf",
+    # "fleurhassann",
+    # "standwithus",
+    # "israel", 
+    # "israeltodaymag", 
+    # "jewishagency", 
+    # "honestreporting", 
+    # "beyondtheheadline", 
+    # "simonwiesenthalcenter", 
+    # "maccabiusa", 
     "aipac", 
-    "Birthrightisraelbeyond", 
-    "ariseforisrael",
-    "houseoflev"
+    # "Birthrightisraelbeyond", 
+    # "ariseforisrael",
+    # "houseoflev"
 ]
 
 
@@ -415,24 +414,34 @@ def execute_action(d,reason,report_dict):
     else:
         print("No action found for this reason.")
 
+
+file_lock = threading.Lock()
+
 def update_results_file(action_type):
-    file_path = "results.txt"
-    # Load current values
-    with open(file_path, "r") as file:
-        data = file.readlines()
-
-    # Parse current counts from the file
-    stats = {}
-    for line in data:
-        key, value = line.strip().split(" - ")
-        stats[key] = int(value)
+    """
+    Updates the results file with the incremented count for the given action.
     
-    # Increment the relevant action count
-    if action_type in stats:
-        stats[action_type] += 1
+    Parameters:
+    action_type (str): The action type to update ('Likes', 'Comments', 'Follows', 'Reports').
+    """
+    file_path = "results.txt"
+    
+    with file_lock:  # Ensure only one thread accesses the file at a time
+        # Load current values
+        with open(file_path, "r") as file:
+            data = file.readlines()
 
-    # Write updated values back to the file
-    with open(file_path, "w") as file:
-        for key, value in stats.items():
-            file.write(f"{key} - {value}\n")
+        # Parse current counts from the file
+        stats = {}
+        for line in data:
+            key, value = line.strip().split(" - ")
+            stats[key] = int(value)
+        
+        # Increment the relevant action count
+        if action_type in stats:
+            stats[action_type] += 1
 
+        # Write updated values back to the file
+        with open(file_path, "w") as file:
+            for key, value in stats.items():
+                file.write(f"{key} - {value}\n")
