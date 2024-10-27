@@ -33,7 +33,7 @@ def scroll_random_number(d):
         print("Found a scrollable view! Swiping down...")
 
         # Randomly choose how many times to swipe (between 1 and 3)
-        num_swipes = random.randint(1,3)
+        num_swipes = random.randint(3,8)
         print(f"Number of swipes: {num_swipes}")
 
         # Perform the swipe action for the chosen number of times
@@ -267,21 +267,21 @@ def main(d):
     # Connect to the Android device using its IP address (make sure your device is connected via ADB over Wi-Fi)
     d.app_start("com.instagram.android")
     print("Opened Instagram!")
-    for _ in range(8):
+    for _ in range(1):
         time.sleep(7)  # Wait for Instagram to fully load
         scroll_random_number(d)
-        time.sleep(2)
+        # time.sleep(2)
         # tap_like_button(d)
-        time.sleep(7)
-        search_and_go_to_account(d,random.choice(instagram_accounts))
-        time.sleep(3)
-        scroll_like_and_comment(d)
-        time.sleep(3)
-        scroll_random_number(d)
+        # time.sleep(7)
+        # search_and_go_to_account(d,random.choice(instagram_accounts))
+        # time.sleep(3)
+        # scroll_like_and_comment(d)
+        # time.sleep(3)
+        # scroll_random_number(d)
         # tap_like_button(d)
-        scroll_random_number(d)
+        # scroll_random_number(d)
     d.app_stop("com.instagram.android")
 
 
 # main(u2.connect("10.100.102.178"))
-follow_page(u2.connect("10.100.102.178"))
+# follow_page(u2.connect("10.100.102.178"))
