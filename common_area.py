@@ -324,7 +324,7 @@ def tap_keyboard(d, text, keyboard = keyboard_dic):
             print(f"{threading.current_thread().name}:{d.wlan_ip} Character '{char}' not found in keyboard dictionary!")
 
 
-def take_screenshot(d,thread,app):
+def take_screenshot(d, thread = threading.current_thread().name, app = "inst"):
     time.sleep(2)
     filename = f"Screenshots/{thread}-screenshot_{app}.png"
     print(f"{thread}:{d.wlan_ip} Taking screenshot...")
@@ -414,3 +414,25 @@ def execute_action(d,reason,report_dict):
             time.sleep(3)  
     else:
         print("No action found for this reason.")
+
+def update_results_file(action_type):
+    file_path = "results.txt"
+    # Load current values
+    with open(file_path, "r") as file:
+        data = file.readlines()
+
+    # Parse current counts from the file
+    stats = {}
+    for line in data:
+        key, value = line.strip().split(" - ")
+        stats[key] = int(value)
+    
+    # Increment the relevant action count
+    if action_type in stats:
+        stats[action_type] += 1
+
+    # Write updated values back to the file
+    with open(file_path, "w") as file:
+        for key, value in stats.items():
+            file.write(f"{key} - {value}\n")
+

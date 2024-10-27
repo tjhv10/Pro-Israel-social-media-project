@@ -125,6 +125,10 @@ def search_and_go_to_account(d, name):
         search_and_go_to_account(d,random.choice(instagram_accounts))
     d.click(int(x),int(y))
     time.sleep(5)
+    num = random.choice([1,2,3])
+    if num >=2:
+        pass
+    time.sleep(2)
     d.swipe(500, 1400, 500, 100, duration = 0.02)
     time.sleep(4)
     d.click(120,500)
@@ -146,6 +150,7 @@ def tap_like_button(d, like_button_template_path="icons\instagram_icons\like.png
     if best_match and best_match[0] < 170:
         print(f"Like button found at {best_match} with match value: {best_match}, tapping...")
         d.click(int(best_match[0]), int(best_match[1]))  # Tap the best match
+        update_results_file("Likes")
     else:
         print("Like button not found on the screen.")
 
@@ -179,6 +184,8 @@ def comment_text(d,text, comment_template_path="icons\instagram_icons\comment.pn
         tap_keyboard(d,text)
         time.sleep(1)
         d.press(66)
+        time.sleep(1)
+        update_results_file("Comments")
         time.sleep(1)
         d.press("back")
         time.sleep(1)
@@ -229,13 +236,27 @@ def report(d, link):
         # Click on the share button
         d.click(685, 210)
         time.sleep(3)
-
         # # Click on the report button
         d.click(370, 1500)
         time.sleep(8)
         handle_user_selection(d,report_instagram_clicks)
+        time.sleep(2)
+        update_results_file("Reports")
         time.sleep(4)
         d.app_stop("com.twitter.android")
+
+def follow_page(d, follow_template_path="icons/instagram_icons/follow.png"):
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Starting follow_page function")
+    screenshot_path = take_screenshot(d,threading.current_thread().name,"inst")
+    best_match = find_best_match(screenshot_path, follow_template_path,d)
+    if best_match:
+        d.click(int(best_match[0]), int(best_match[1]))
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Followed account!")
+        time.sleep(1)
+        time.sleep(2)
+    else:
+        print(f"{threading.current_thread().name}:{d.wlan_ip} Follow icon not found on the screen.")
+    print(f"{threading.current_thread().name}:{d.wlan_ip} Finished follow_page function")
 
 def main(d):
     """
@@ -244,7 +265,7 @@ def main(d):
     # Connect to the Android device using its IP address (make sure your device is connected via ADB over Wi-Fi)
     d.app_start("com.instagram.android")
     print("Opened Instagram!")
-    for _ in range(10):
+    for _ in range(8):
         time.sleep(7)  # Wait for Instagram to fully load
         scroll_random_number(d)
         time.sleep(2)
@@ -264,5 +285,6 @@ def main(d):
 # main()
 
 # Example of performing a comment action:
-# d = u2.connect("10.100.102.178")  # Use the IP address of your device
-# time.sleep(1)
+d = u2.connect("10.100.102.178")  # Use the IP address of your device
+time.sleep(1)
+take_screenshot(d)
