@@ -261,7 +261,7 @@ def main(d):
         # tap_like_button(d)
         time.sleep(2)
     time.sleep(2)
-    for _ in range(8):
+    for _ in range(1):
         search_and_go_to_page(d, random.choice(twitter_handles))
         time.sleep(2)
         follow_page(d)

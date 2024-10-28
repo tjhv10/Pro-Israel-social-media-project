@@ -14,6 +14,7 @@ def tap_users(d, users_template_path="icons/tiktok_icons/users.png"):
     if best_coordinates:
         d.click(int(best_coordinates[0]), int(best_coordinates[1]))
     else:
+        d.click(196,213)
         print(f"{threading.current_thread().name}:{d.wlan_ip} Users button not found on the screen.")
    
 
@@ -38,7 +39,7 @@ def search(d, text):
     tap_users(d)  # Click to go to users
     time.sleep(5)
 
-    d.click(700, 300)  # Click to go into the first result
+    d.click(350, 335)  # Click to go into the first result
     time.sleep(4)
     
         
@@ -101,7 +102,7 @@ def scroll_random_number(d):
     
     if d(scrollable=True).exists:
         print(f"{threading.current_thread().name}:{d.wlan_ip} Found a scrollable view! Swiping down...")
-        num_swipes = random.randint(1, 8)
+        num_swipes = random.randint(1, 2)
         print(f"{threading.current_thread().name}:{d.wlan_ip} Number of swipes: {num_swipes}")
 
         for i in range(num_swipes):
@@ -125,7 +126,7 @@ def scroll_like_and_comment(d):
     screen_width = d.info['displayWidth']
     screen_height = d.info['displayHeight']
 
-    for i in range(30):
+    for i in range(2):
         if d(scrollable=True).exists:
             x_start = screen_width * (500 / 720)
             y_start = screen_height * (1200 / 1560)
@@ -163,7 +164,7 @@ def scroll_like_and_comment(d):
 def like_a_page(d, page):
     search(d, page)
     time.sleep(2)
-    d.click(120, 1300) # Get in the first page
+    d.click(120, 1450) # Get in the first page
     time.sleep(3)
     scroll_like_and_comment(d)
 
@@ -203,7 +204,7 @@ def main(d):
     time.sleep(15)
     if "com.zhiliaoapp.musically" in d.app_list_running():
         print(f"{threading.current_thread().name}:{d.wlan_ip} TikTok is running!")
-        for _ in range(8):
+        for _ in range(10):
             scroll_random_number(d)
             # time.sleep(1)
             # tap_like_button(d)

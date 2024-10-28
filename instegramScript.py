@@ -270,16 +270,16 @@ def main(d):
     for _ in range(1):
         time.sleep(7)  # Wait for Instagram to fully load
         scroll_random_number(d)
-        # time.sleep(2)
-        # tap_like_button(d)
-        # time.sleep(7)
-        # search_and_go_to_account(d,random.choice(instagram_accounts))
-        # time.sleep(3)
-        # scroll_like_and_comment(d)
-        # time.sleep(3)
-        # scroll_random_number(d)
-        # tap_like_button(d)
-        # scroll_random_number(d)
+        time.sleep(2)
+        tap_like_button(d)
+        time.sleep(7)
+        search_and_go_to_account(d,random.choice(instagram_accounts))
+        time.sleep(3)
+        scroll_like_and_comment(d)
+        time.sleep(3)
+        scroll_random_number(d)
+        tap_like_button(d)
+        scroll_random_number(d)
     d.app_stop("com.instagram.android")
 
 

@@ -176,7 +176,6 @@ tiktok_accounts = [
     "cbcnews",
     "newsmaxtv",
     "hananyanaftali",
-    "rudy_israel",
     "Shaidavidai",
     "noybeyleyb",
     "EylonALevy",

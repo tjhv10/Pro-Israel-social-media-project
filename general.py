@@ -27,7 +27,7 @@ def run_program(device_id):
         time.sleep(5)  # Delay between scripts
         print(f"Running Instagram script on device: {device_id}")
         inst.main(d)
-        time.sleep(10000)
+        # time.sleep(0000)
         
     else:
         print(f"Could not connect to device: {device_id}")
